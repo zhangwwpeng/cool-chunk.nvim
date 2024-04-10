@@ -4,8 +4,6 @@ local api = vim.api
 ---@class PlugConfig
 ---@field chunk ChunkOpts
 ---@field line_num LineNumOpts
----@field indent IndentOpts
----@field blank BlankOpts
 ---@field context ContextOpts
 
 -- get the status(whether enabled) of mods, return a table
@@ -17,9 +15,7 @@ local function get_mods_status(plugin_config)
     local mods_status = {
         chunk = true,
         line_num = true,
-        indent = true,
-        blank = true,
-        context = false,
+        context = true,
     }
 
     for mod_name, mod_conf in pairs(plugin_config) do

@@ -10,12 +10,10 @@ chunk have four configurable items
 
 1. enable
 2. notify
-3. use_treesitter
 4. exclude_filetypes
 5. support_filetypes
 6. chars
 7. style
-8. max_file_size
 9. error_sign
 
 `enable` is used to control whether the mod is started, the default is true.
@@ -23,8 +21,6 @@ chunk have four configurable items
 If set to false, the usercmd and autocmd it carries will not be generated, and the mod will be closed at this time
 
 `notify` is used to control whether to pop up a prompt in some cases (such as using the disableHLChunk command twice in a row), the default is true
-
-`use_treesitter` is used to control whether to use treesitter to highlight the code block, the default is true
 
 If set to false, vim's match will be used to highlight the code block, otherwise treesitter will be used to determine the current code block
 
@@ -82,8 +78,6 @@ style = {
     { fg = "#f35336" },
 },
 ```
-
-`max_file_size` is a number, the default is 1024\*1024(1MB), which is used to control the maximum file size that can be highlighted
 
 `error_sign` is a boolean, the default is true, if you use treesitter to highlight the chunk, when this is a wrong chunk, it will set the chunk color to maple red (or what other you want), to enable this option, style should have two color, the default style is
 

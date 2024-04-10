@@ -6,10 +6,8 @@ local fn = vim.fn
 local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 
 ---@class ChunkOpts: BaseModOpts
----@field use_treesitter boolean
 ---@field chars table<string, string>
 ---@field textobject string
----@field max_file_size number
 ---@field error_sign boolean
 
 ---@class ChunkMod: BaseMod
@@ -21,9 +19,12 @@ local chunk_mod = BaseMod:new({
     options = {
         enable = true,
         notify = true,
-        use_treesitter = true,
         support_filetypes = ft.support_filetypes,
         exclude_filetypes = ft.exclude_filetypes,
+        hl_group = {
+            chunk = "#6a7880",
+            error = "#e67e80",
+        },
         chars = {
             horizontal_line = "─",
             vertical_line = "│",
@@ -31,12 +32,7 @@ local chunk_mod = BaseMod:new({
             left_bottom = "╰",
             right_arrow = ">",
         },
-        style = {
-            { fg = "#806d9c" },
-            { fg = "#c21f30" },
-        },
-        textobject = "",
-        max_file_size = 1024 * 1024,
+        textobject = "ah",
         error_sign = true,
     },
 })
@@ -48,38 +44,19 @@ function chunk_mod:enable()
 end
 
 -- set new virtual text to the right place
-function chunk_mod:render(opts)
+function chunk_mod:render()
     if not self.options.enable or self.options.exclude_filetypes[vim.bo.ft] then
         return
     end
 
-    opts = opts or { lazy = false }
-
-    local retcode, cur_chunk_range = utils.get_chunk_range(self, nil, {
-        use_treesitter = self.options.use_treesitter,
-    })
-    local text_hl = "HLChunk1"
-    if retcode == CHUNK_RANGE_RET.NO_TS then
-        if self.options.notify then
-            self:notify("[hlchunk.chunk]: no parser for " .. vim.bo.filetype, nil, { once = true })
-        end
-        return
-    elseif retcode == CHUNK_RANGE_RET.NO_CHUNK then
+    local retcode, cur_chunk_range = utils.get_chunk_range(self)
+    local text_hl = self.options.hl_group.chunk
+    if retcode == CHUNK_RANGE_RET.NO_CHUNK then
         self:clear()
         self.old_chunk_range = { 1, 1 }
         return
     elseif retcode == CHUNK_RANGE_RET.CHUNK_ERR then
-        text_hl = "HLChunk2"
-    end
-
-    local old_chunk_range = self.old_chunk_range
-    if
-        opts.lazy
-        and not self.options.error_sign
-        and cur_chunk_range[1] == old_chunk_range[1]
-        and cur_chunk_range[2] == old_chunk_range[2]
-    then
-        return
+        text_hl = self.options.hl_group.error
     end
 
     self.old_chunk_range = cur_chunk_range
@@ -156,73 +133,23 @@ end
 function chunk_mod:enable_mod_autocmd()
     BaseMod.enable_mod_autocmd(self)
 
-    local events = self.options.in_performance
-        and { "CursorHold", "CursorHoldI" } or { "CursorMoved", "CursorMovedI" }
-
-    api.nvim_create_autocmd(events, {
+    api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
         group = self.augroup_name,
         pattern = self.options.support_filetypes,
         callback = function()
-            -- force render in any case
-            if self.options.in_performance then
-                chunk_mod:render({ lazy = false })
-                return
-            end
-
-            local cur_win_info = fn.winsaveview()
-            local old_win_info = chunk_mod.old_win_info
-
-
-            if cur_win_info.leftcol ~= old_win_info.leftcol then
-                chunk_mod:render({ lazy = false })
-            elseif cur_win_info.lnum ~= old_win_info.lnum then
-                chunk_mod:render({ lazy = true })
-            else
-                chunk_mod:render({ lazy = false })
-            end
-
-            chunk_mod.old_win_info = cur_win_info
+            chunk_mod:render()
         end,
     })
 
-    if self.options.in_performance then
-        return
-    end
+    return
 
-    api.nvim_create_autocmd({ "TextChangedI", "TextChanged" }, {
-        group = self.augroup_name,
-        pattern = self.options.support_filetypes,
-        callback = function()
-            chunk_mod:render({ lazy = false })
-        end,
-    })
-    api.nvim_create_autocmd({ "WinScrolled" }, {
-        group = self.augroup_name,
-        pattern = "*",
-        callback = function()
-            local cur_win_info = fn.winsaveview()
-            local old_win_info = chunk_mod.old_win_info
-
-            if cur_win_info.leftcol ~= old_win_info.leftcol then
-                chunk_mod:render({ lazy = false })
-            elseif cur_win_info.lnum ~= old_win_info.lnum then
-                chunk_mod:render({ lazy = true })
-            end
-
-            chunk_mod.old_win_info = cur_win_info
-        end,
-    })
-    api.nvim_create_autocmd({ "UIEnter", "BufWinEnter" }, {
-        group = self.augroup_name,
-        callback = function()
-            -- get the file size of the current buffer
-            local ok, status = pcall(fn.getfsize, fn.expand("%"))
-            if ok and status >= chunk_mod.options.max_file_size then
-                self:notify("File is too large, chunk.nvim will not be loaded")
-                chunk_mod:disable()
-            end
-        end,
-    })
+        api.nvim_create_autocmd({ "TextChangedI", "TextChanged" }, {
+            group = self.augroup_name,
+            pattern = self.options.support_filetypes,
+            callback = function()
+                chunk_mod:render()
+            end,
+        })
 end
 
 function chunk_mod:extra()
@@ -231,9 +158,7 @@ function chunk_mod:extra()
         return
     end
     vim.keymap.set({ "x", "o" }, textobject, function()
-        local retcode, cur_chunk_range = utils.get_chunk_range(self, nil, {
-            use_treesitter = self.options.use_treesitter,
-        })
+        local retcode, cur_chunk_range = utils.get_chunk_range(self)
         if retcode ~= CHUNK_RANGE_RET.OK then
             return
         end
@@ -248,6 +173,19 @@ function chunk_mod:extra()
         vim.cmd("normal! V")
         api.nvim_win_set_cursor(0, { e_row, 0 })
     end)
+end
+
+function chunk_mod:set_hl()
+    if string.sub(self.options.hl_group.chunk, 1, 1) == "#" then
+        local fg = self.options.hl_group.chunk
+        self.options.hl_group.chunk = "HLChunkChunkChunk"
+        api.nvim_set_hl(0, self.options.hl_group.chunk, { fg = fg })
+    end
+    if string.sub(self.options.hl_group.error, 1, 1) == "#" then
+        local fg = self.options.hl_group.error
+        self.options.hl_group.error = "HLChunkChunkError"
+        api.nvim_set_hl(0, self.options.hl_group.error, { fg = fg })
+    end
 end
 
 return chunk_mod

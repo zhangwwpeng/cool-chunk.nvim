@@ -3,10 +3,6 @@
 </div>
 <h1 align='center'>hlchunk.nvim</h1>
 
-<p align='center'>
-<b>English</b> | <a href="https://github.com/shellRaining/hlchunk.nvim/blob/main/README.zh-CN.md">简体中文</a>
-</p>
-
 ## What can this plugin do
 
 similar to [indent-blankline](https://github.com/lukas-reineke/indent-blankline.nvim), this plugin can highlight the indent line, and highlight the code chunk according to the current cursor position.
@@ -22,10 +18,8 @@ similar to [indent-blankline](https://github.com/lukas-reineke/indent-blankline.
 this plugin now have five parts (future will add more... `^v^`)
 
 1. chunk
-2. indent
-3. line_num
-4. blank
-5. context (experimental)
+2. line_num
+3. context
 
 one picture to understand what these mods do
 
@@ -41,25 +35,10 @@ one picture to understand what these mods do
 <img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2303/08_hlchunk8.gif">
 </a>
 
-### indent
-
-<a href='./docs/en/indent.md'>
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/23_hlchunk2.png">
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/27_hlchunk4.png">
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2305/01_indent.png">
-</a>
-
 ### line_num
 
 <a href='./docs/en/line_num.md'>
 <img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/25_hlchunk3.png">
-</a>
-
-### blank
-
-<a href='./docs/en/blank.md'>
-<img width='500' src='https://raw.githubusercontent.com/shellRaining/img/main/2303/11_hlblank2.png'>
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2303/08_hlblank1.png">
 </a>
 
 ## Requirements
@@ -110,9 +89,6 @@ The script comes with the following defaults:
     chunk = {
         enable = true,
         notify = true,
-        use_treesitter = true,
-        -- if hlchunk make your neovim slowly, set this option to true and try again
-        in_performance = false,
         -- details about support_filetypes and exclude_filetypes in https://github.com/shellRaining/hlchunk.nvim/blob/main/lua/hlchunk/utils/filetype.lua
         support_filetypes = ft.support_filetypes,
         exclude_filetypes = ft.exclude_filetypes,
@@ -128,41 +104,14 @@ The script comes with the following defaults:
             { fg = "#c21f30" }, -- this fg is used to highlight wrong chunk
         },
         textobject = "",
-        max_file_size = 1024 * 1024,
         error_sign = true,
-    },
-
-    indent = {
-        enable = true,
-        use_treesitter = false,
-        -- if hlchunk make your neovim slowly, set this option to true and try again
-        in_performance = false,
-        chars = {
-            "│",
-        },
-        style = {
-            { fg = vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("Whitespace")), "fg", "gui") }
-        },
     },
 
     line_num = {
         enable = true,
-        use_treesitter = false,
         -- if hlchunk make your neovim slowly, set this option to true and try again
         in_performance = false,
         style = "#806d9c",
-    },
-
-    blank = {
-        enable = true,
-        -- if hlchunk make your neovim slowly, set this option to true and try again
-        in_performance = false,
-        chars = {
-            "․",
-        },
-        style = {
-            vim.fn.synIDattr(vim.fn.synIDtrans(vim.fn.hlID("Whitespace")), "fg", "gui"),
-        },
     },
 }
 ```
@@ -177,16 +126,30 @@ setup example:
 
 ```lua
 require('hlchunk').setup({
-    indent = {
-        chars = { "│", "¦", "┆", "┊", }, -- more code can be found in https://unicodeplus.com/
-
-        style = {
-            "#8B00FF",
+    chunk = {
+        enable = true,
+        notify = true,
+        chars = {
+            horizontal_line = "─",
+            vertical_line = "│",
+            left_top = "╭",
+            left_bottom = "╰",
+            right_arrow = ">",
         },
+        style = {
+            { fg = "#806d9c" },
+            { fg = "#c21f30" }, -- this fg is used to highlight wrong chunk
+        },
+        textobject = "",
+        error_sign = true,
     },
-    blank = {
-        enable = false,
-    }
+
+    line_num = {
+        enable = true,
+        -- if hlchunk make your neovim slowly, set this option to true and try again
+        in_performance = false,
+        style = "#806d9c",
+    },
 })
 ```
 
@@ -207,19 +170,9 @@ the two commands are used to switch the whole plugin status, when use `DisableHL
 
 the two will control `hl_chunk`
 
-- DisableHLIndent
-- EnableHLIndent
-
-the two will control `hl_indent`
-
 - DisableHLLineNum
 - EnableHLLineNum
 
 the two will control `hl_line_num`
-
-- DisableHLBlank
-- EnableHLBlank
-
-the two will control `hl_blank`
 
 </details>

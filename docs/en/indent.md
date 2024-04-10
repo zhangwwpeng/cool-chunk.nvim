@@ -6,7 +6,6 @@ chunk have five configurable items
 
 1. enable
 2. notify
-3. use_treesitter
 4. chars
 5. style
 6. exclude_filetype
@@ -14,8 +13,6 @@ chunk have five configurable items
 `enable` is used to control whether enable hl_indent, if set it to false, its usercmd and autocmd will not set, so it will not work
 
 `notify` is used to control whether notify when some situation(like disable indent mod double time)
-
-`use_treesitter` is a boolean value, if set it to true, this mod will judge indent by using treesitter
 
 `chars` is used to configure what char to render the indent line, it is a table contains many char, like this
 
@@ -102,7 +99,6 @@ if you like bold line, you can set background color
 ````lua
 indent = {
     enable = true,
-    use_treesitter = false,
     chars = {
         " ",
     },
