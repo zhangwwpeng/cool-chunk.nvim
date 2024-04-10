@@ -14,11 +14,10 @@ local line_num_mod = BaseMod:new({
     options = {
         enable = true,
         notify = true,
-        use_treesitter = false,
         hl_group = {
-            chunk = "#6a7880",
-            context = "#4f585e",
-            error = "#e67e80",
+            chunk = "CursorLineNr",
+            context = "LineNr",
+            error = "Error",
         },
         support_filetypes = ft.support_filetypes,
         exclude_filetypes = ft.exclude_filetypes,

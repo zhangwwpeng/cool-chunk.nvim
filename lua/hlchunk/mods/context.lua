@@ -19,7 +19,7 @@ local context_mod = BaseMod:new({
             "│",
         },
         hl_group = {
-            context = "#4f585e",
+            context = "LineNr",
         },
         exclude_filetypes = ft.exclude_filetypes,
         textobject = "ih",
