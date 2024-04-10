@@ -43,7 +43,6 @@ function M.get_chunk_range(mod)
         local node_type = cursor_node:type()
         local node_start, _, node_end, _ = cursor_node:range()
         if node_start ~= node_end and is_suit_type(node_type) then
-            ---@diagnostic disable-next-line: undefined-field
             return cursor_node:has_error() and M.CHUNK_RANGE_RET.CHUNK_ERR or M.CHUNK_RANGE_RET.OK,
                 {
                     node_start + 1,

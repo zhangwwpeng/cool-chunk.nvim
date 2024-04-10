@@ -43,7 +43,12 @@ local chunk_mod = BaseMod:new({
 -- chunk_mod can use text object, so add a new function extra to handle it
 function chunk_mod:enable()
     BaseMod.enable(self)
-    self:extra()
+    self:set_keymap()
+end
+
+function chunk_mod:disable()
+    BaseMod.disable(self)
+    self:del_keymap()
 end
 
 -- set new virtual text to the right place
@@ -56,7 +61,6 @@ function chunk_mod:render()
     local hl_group = self.options.hl_group.chunk
     if retcode == CHUNK_RANGE_RET.NO_CHUNK then
         self:clear()
-        self.old_chunk_range = { 1, 1 }
         return
     elseif retcode == CHUNK_RANGE_RET.CHUNK_ERR then
         hl_group = self.options.hl_group.error
@@ -67,20 +71,94 @@ function chunk_mod:render()
         return
     end
 
-    self.old_chunk_range = cur_chunk_range
-
-    local get_indent = require("nvim-treesitter.indent").get_indent
-
+    self:clear()
     self.ns_id = api.nvim_create_namespace(self.name)
+    self.old_chunk_range = cur_chunk_range
+    self.bufnr = api.nvim_get_current_buf()
 
-    local beg_row, end_row = unpack(cur_chunk_range)
+    if cur_chunk_range[2] - cur_chunk_range[1] >= math.floor(api.nvim_win_get_height(0) / 2) then
+        chunk_mod:draw_by_direct(cur_chunk_range, hl_group)
+    else
+        chunk_mod:draw_by_animate(cur_chunk_range, hl_group)
+    end
+end
 
+function chunk_mod:draw_by_direct(range, hl_group)
+    local get_indent = require("nvim-treesitter.indent").get_indent
+    local beg_row, end_row = unpack(range)
+    local beg_blank_len = get_indent(beg_row)
+    local end_blank_len = get_indent(end_row)
+    local shiftwidth = fn.shiftwidth()
+    local start_col = math.max(math.min(beg_blank_len, end_blank_len) - shiftwidth, 0)
+    local offset = fn.winsaveview().leftcol
+    local get_width = api.nvim_strwidth
+    local row_opts = {
+        virt_text_pos = "overlay",
+        hl_mode = "combine",
+        priority = 100,
+    }
+
+    -- render beg_row
+    if beg_blank_len > 0 then
+        local virt_text_len = beg_blank_len - start_col
+        local beg_virt_text = self.options.chars.left_top .. self.options.chars.horizontal_line:rep(virt_text_len - 1)
+
+        -- because the char is utf-8, so we need to get the utf-8 byte index
+        if not utils.col_in_screen(start_col) then
+            local byte_idx = math.min(offset - start_col, virt_text_len)
+            if byte_idx > get_width(beg_virt_text) then
+                byte_idx = get_width(beg_virt_text)
+            end
+            local utfBeg = vim.str_byteindex(beg_virt_text, byte_idx)
+            beg_virt_text = beg_virt_text:sub(utfBeg + 1)
+        end
+
+        row_opts.virt_text = { { beg_virt_text, hl_group } }
+        row_opts.virt_text_win_col = math.max(start_col - offset, 0)
+        api.nvim_buf_set_extmark(0, self.ns_id, beg_row - 1, 0, row_opts)
+    end
+
+    -- render end_row
+    if end_blank_len > 0 then
+        local virt_text_len = end_blank_len - start_col
+        local end_virt_text = self.options.chars.left_bottom
+            .. self.options.chars.horizontal_line:rep(end_blank_len - start_col - 2)
+            .. self.options.chars.right_arrow
+
+        if not utils.col_in_screen(start_col) then
+            local byte_idx = math.min(offset - start_col, virt_text_len)
+            if byte_idx > get_width(end_virt_text) then
+                byte_idx = get_width(end_virt_text)
+            end
+            local utfBeg = vim.str_byteindex(end_virt_text, byte_idx)
+            end_virt_text = end_virt_text:sub(utfBeg + 1)
+        end
+        row_opts.virt_text = { { end_virt_text, hl_group } }
+        row_opts.virt_text_win_col = math.max(start_col - offset, 0)
+        api.nvim_buf_set_extmark(0, self.ns_id, end_row - 1, 0, row_opts)
+    end
+
+    -- render middle section
+    for i = beg_row + 1, end_row - 1 do
+        row_opts.virt_text = { { self.options.chars.vertical_line, hl_group } }
+        row_opts.virt_text_win_col = start_col - offset
+        local space_tab = (" "):rep(shiftwidth)
+        local line_val = fn.getline(i):gsub("\t", space_tab)
+        if #line_val <= start_col or fn.indent(i) > start_col then
+            if utils.col_in_screen(start_col) then
+                api.nvim_buf_set_extmark(0, self.ns_id, i - 1, 0, row_opts)
+            end
+        end
+    end
+end
+
+function chunk_mod:draw_by_animate(range, hl_group)
+    local get_indent = require("nvim-treesitter.indent").get_indent
+    local beg_row, end_row = unpack(range)
     local beg_blank_len, end_blank_len = get_indent(beg_row), get_indent(end_row)
     local start_col = math.max(math.min(beg_blank_len, end_blank_len) - fn.shiftwidth(), 0)
 
-    self:clear()
-
-    local opts = { virt_text = {}, offset = {}, line_num = {}, hl_group = hl_group }
+    local opts = { virt_text = {}, offset = {}, line_num = {}, hl_group = hl_group, bufnr = self.bufnr }
     local start_range = beg_row - beg_blank_len + start_col
     local end_range = end_row + end_blank_len - start_col
 
@@ -109,7 +187,7 @@ function chunk_mod:render()
         opts.line_num[i - start_range] = line_num
     end
 
-    timer.start_draw(self.ns_id, opts, end_range - start_range)
+    self:draw(opts, end_range - start_range)
 end
 
 function chunk_mod:enable_mod_autocmd()
@@ -122,19 +200,9 @@ function chunk_mod:enable_mod_autocmd()
             chunk_mod:render()
         end,
     })
-
-    return
-
-        api.nvim_create_autocmd({ "TextChangedI", "TextChanged" }, {
-            group = self.augroup_name,
-            pattern = self.options.support_filetypes,
-            callback = function()
-                chunk_mod:render()
-            end,
-        })
 end
 
-function chunk_mod:extra()
+function chunk_mod:set_keymap()
     local textobject = self.options.textobject
     if #textobject == 0 then
         return
@@ -155,6 +223,14 @@ function chunk_mod:extra()
         vim.cmd("normal! V")
         api.nvim_win_set_cursor(0, { e_row, 0 })
     end)
+end
+
+function chunk_mod:del_keymap()
+    local textobject = self.options.textobject
+    if #textobject == 0 then
+        return
+    end
+    vim.keymap.del({ "x", "o" }, textobject)
 end
 
 function chunk_mod:set_hl()

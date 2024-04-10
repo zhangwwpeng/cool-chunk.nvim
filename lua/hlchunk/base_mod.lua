@@ -15,6 +15,7 @@ local fn = vim.fn
 ---@class MetaInfo
 ---@field name string
 ---@field ns_id number
+---@field bufnr number buffer number
 ---@field augroup_name string
 
 ---@class RenderOpts
@@ -23,9 +24,11 @@ local fn = vim.fn
 ---@class BaseMod
 ---@field name string the name of mod, use Snake_case naming style, such as line_num
 ---@field ns_id number namespace id
+---@field bufnr number buffer number
 ---@field old_win_info table used to record old window info such as leftcol, curline and top line and so on
 ---@field options BaseModOpts default config for mod, and user can change it when setup
 ---@field augroup_name string with format hl_{mod_name}_augroup, such as hl_chunk_augroup
+---@field animate_duration number a animate duration
 local BaseMod = {
     name = "",
     options = {
@@ -37,8 +40,11 @@ local BaseMod = {
         hl_group = {},
     },
     ns_id = -1,
+    bufnr = 0,
     old_win_info = fn.winsaveview(),
     augroup_name = "",
+    animate_timer = vim.loop.new_timer(),
+    animate_duration = 200,
 }
 
 ---@return BaseMod
@@ -102,13 +108,53 @@ function BaseMod:render()
     self:notify("not implemented render " .. self.name, vim.log.levels.ERROR)
 end
 
+---@param opts?  table
+---@param len?   number
+function BaseMod:draw(opts, len)
+    opts = opts or {}
+
+    local index = 1
+    local interval = math.floor(self.animate_duration / len)
+    local prev_opt = nil
+    local prev_line = 0
+    self.animate_timer:start(interval, interval, vim.schedule_wrap(function()
+        local row_opts = {
+            virt_text_pos = "overlay",
+            hl_mode = "combine",
+            priority = 100,
+        }
+
+        row_opts.virt_text = { { opts.virt_text[index][1], opts.hl_group } }
+        row_opts.virt_text_win_col = opts.offset[index]
+        local id = api.nvim_buf_set_extmark(opts.bufnr, self.ns_id, opts.line_num[index] - 1, 0, row_opts)
+
+        if prev_opt then
+            api.nvim_buf_set_extmark(opts.bufnr, self.ns_id, prev_line, 0, prev_opt)
+        end
+        prev_line = opts.line_num[index] - 1
+        prev_opt = row_opts
+        prev_opt.id = id
+        prev_opt.virt_text = { { opts.virt_text[index][2], opts.hl_group } }
+
+        index = index + 1
+        if index == len then
+            self.animate_timer:stop()
+        end
+    end))
+end
+
 function BaseMod:clear(line_start, line_end)
     line_start = line_start or 0
     line_end = line_end or -1
 
+    self.animate_timer:stop()
+    self.old_chunk_range = { 1, 1 }
+    self.bufnr = 0
+
     if self.ns_id ~= -1 then
-        api.nvim_buf_clear_namespace(0, self.ns_id, line_start, line_end)
+        api.nvim_buf_clear_namespace(self.bufnr, self.ns_id, line_start, line_end)
     end
+    self.ns_id = -1
 end
 
 function BaseMod:disable_mod_autocmd()
