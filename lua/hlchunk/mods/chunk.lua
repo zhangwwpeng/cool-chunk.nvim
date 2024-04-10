@@ -4,7 +4,6 @@ local ft = require("hlchunk.utils.filetype")
 local api = vim.api
 local fn = vim.fn
 local timer = require("hlchunk.utils.timer")
-local ani_manager = require("hlchunk.utils.animation_manager")
 local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 
 ---@class ChunkOpts: BaseModOpts
@@ -33,7 +32,7 @@ local chunk_mod = BaseMod:new({
             left_top = "╭",
             left_bottom = "╰",
             left_arrow = "<",
-            bottom_arrow = "V",
+            bottom_arrow = "v",
             right_arrow = ">",
         },
         textobject = "ah",
@@ -63,6 +62,13 @@ function chunk_mod:render()
         hl_group = self.options.hl_group.error
     end
 
+    if cur_chunk_range[1] == self.old_chunk_range[1] and
+        cur_chunk_range[2] == self.old_chunk_range[2] then
+        return
+    end
+
+    self.old_chunk_range = cur_chunk_range
+
     local get_indent = require("nvim-treesitter.indent").get_indent
 
     self.ns_id = api.nvim_create_namespace(self.name)
@@ -72,35 +78,33 @@ function chunk_mod:render()
     local beg_blank_len, end_blank_len = get_indent(beg_row), get_indent(end_row)
     local start_col = math.max(math.min(beg_blank_len, end_blank_len) - fn.shiftwidth(), 0)
 
-    ani_manager.set_running(true)
     self:clear()
 
     local opts = { virt_text = {}, offset = {}, line_num = {}, hl_group = hl_group }
     local start_range = beg_row - beg_blank_len + start_col
     local end_range = end_row + end_blank_len - start_col
 
-    -- The range of all characters
     for i = start_range + 1, end_range - 1, 1 do
         local virt_text = self.options.chars["vertical_line"]
+        local arrow_text = self.options.chars["bottom_arrow"]
         local line_num = i
         local offset = start_col - fn.winsaveview().leftcol
 
-        if beg_row > i then
-            -- If it is true, replace it with the corresponding symbol
+        if beg_row == i then
+            virt_text = self.options.chars["left_top"]
+            arrow_text = self.options.chars["left_arrow"]
+        elseif beg_row > i then
             virt_text = self.options.chars["horizontal_line"]
-            --  Here is the start of the horizontal line, so the number of lines cannot be less than beg_row
             offset, line_num = offset - (i - beg_row), beg_row
+            arrow_text = self.options.chars["left_arrow"]
         elseif end_row < i then
             virt_text = self.options.chars["horizontal_line"]
+            arrow_text = self.options.chars["right_arrow"]
             offset, line_num = offset + (i - end_row), end_row
-        elseif beg_row == i then
-            virt_text = self.options.chars["left_top"]
         elseif end_row == i then
             virt_text = self.options.chars["left_bottom"]
         end
-
-        -- Save character data into the table
-        opts.virt_text[i - start_range] = virt_text -- "i - start_range" makes the index start from zero
+        opts.virt_text[i - start_range] = { arrow_text, virt_text }
         opts.offset[i - start_range] = offset
         opts.line_num[i - start_range] = line_num
     end
