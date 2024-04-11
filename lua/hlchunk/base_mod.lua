@@ -52,25 +52,20 @@ end
 
 -- just enable a mod instance, called when the mod was disable or not init
 function BaseMod:enable()
-    local ok, info = pcall(function()
-        if self.is_enabled then
-            return
-        end
-        self.is_enabled = true
-
-        if not self.is_loaded then
-            self:set_hl()
-            self:create_mod_usercmd()
-            self.is_loaded = true
-        end
-        self:enable_mod_autocmd()
-        self:render()
-
-        return true
-    end)
-    if not ok then
-        self:notify(tostring(info))
+    if self.is_enabled then
+        return false
     end
+    self.is_enabled = true
+
+    if not self.is_loaded then
+        self:set_hl()
+        self:create_mod_usercmd()
+        self.is_loaded = true
+    end
+    self:enable_mod_autocmd()
+    self:render()
+
+    return true
 end
 
 function BaseMod:enable_mod_autocmd()
@@ -89,20 +84,15 @@ function BaseMod:set_hl()
 end
 
 function BaseMod:disable()
-    local ok, info = pcall(function()
-        if not self.is_enabled then
-            return
-        end
-
-        self.is_enabled = false
-        self:disable_mod_autocmd()
-        self:clear()
-
-        return true
-    end)
-    if not ok then
-        self:notify(tostring(info))
+    if not self.is_enabled then
+        return false
     end
+
+    self.is_enabled = false
+    self:disable_mod_autocmd()
+    self:clear()
+
+    return true
 end
 
 function BaseMod:render()
