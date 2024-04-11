@@ -1,5 +1,7 @@
 local Array = require("hlchunk.utils.array")
 local api = vim.api
+local utils = require("hlchunk.utils.utils")
+local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 
 ---@class BaseModOpts
 ---@field hl_group table<string, string>
@@ -15,6 +17,7 @@ local api = vim.api
 ---@field is_loaded boolean
 ---@field is_enabled boolean
 ---@field animate_timer timer
+---@field is_error boolean
 
 ---@class BaseMod
 ---@field name string the name of mod, use Snake_case naming style, such as line_num
@@ -34,6 +37,7 @@ local BaseMod = {
     ns_id = -1,
     bufnr = 0,
     old_range = {},
+    is_error = false,
     is_loaded = false,
     is_enabled = false,
     augroup_name = "",
@@ -141,10 +145,11 @@ function BaseMod:draw_by_animate(opts, len)
     end))
 end
 
-function BaseMod:refresh(range)
+function BaseMod:refresh(range, is_error)
     self.ns_id = api.nvim_create_namespace(self.name)
     self.bufnr = api.nvim_get_current_buf()
     self.old_range = range or {}
+    self.is_error = is_error or false
 end
 
 function BaseMod:clear(line_start, line_end)
@@ -157,6 +162,7 @@ function BaseMod:clear(line_start, line_end)
 
     self.old_range = {}
     self.bufnr = 0
+    self.is_error = nil
 
     if self.ns_id ~= -1 then
         api.nvim_buf_clear_namespace(self.bufnr, self.ns_id, line_start, line_end)
