@@ -8,6 +8,7 @@ return {
     for_numeric = "for_numeric",
     for_statement = "for_statement",
     ["function"] = "function",
+    function_declaration = "function_declaration",
     function_arguments = "function_arguments",
     function_body = "function_body",
     function_body_paren = "function_body_paren",
