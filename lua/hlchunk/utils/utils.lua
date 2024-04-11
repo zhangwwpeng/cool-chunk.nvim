@@ -134,6 +134,29 @@ function M.get_ctx_range(mod)
         end
     end
 
+    local by_node = function()
+        local cursor_node = treesitter.get_node()
+        while cursor_node do
+            local start_row, _, end_row, _ = cursor_node:range()
+            local start_indent = get_indent(start_row + 1)
+            if start_row ~= end_row and
+                start_indent == get_indent(end_row + 1) and
+                start_indent < cur_indent then
+                return start_indent, start_row + 2, end_row
+            end
+            cursor_node = cursor_node:parent()
+        end
+    end
+
+    if pre_indent <= cur_indent and cur_indent <= next_indent then
+        local indent, beg_row, end_row = by_node()
+        if end_row < end_line then
+            return { indent, beg_row, end_row }
+        end
+    elseif next_indent < cur_indent then
+        return { by_node() }
+    end
+
     return { ctx_indent, beg_line, end_line }
 end
 
