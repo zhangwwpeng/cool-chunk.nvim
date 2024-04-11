@@ -26,7 +26,7 @@ local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 ---@field options BaseModOpts default config for mod, and user can change it when setup
 ---@field augroup_name string with format hl_{mod_name}_augroup, such as hl_chunk_augroup
 local BaseMod = {
-    name = "",
+    name = "CoolChunk",
     options = {
         exclude_filetypes = {},
         support_filetypes = {},
@@ -181,10 +181,10 @@ function BaseMod:create_mod_usercmd()
             return value:firstToUpper()
         end)
         :join()
-    api.nvim_create_user_command("EnableHL" .. mod_name, function()
+    api.nvim_create_user_command("EnableCC" .. mod_name, function()
         self:enable()
     end, {})
-    api.nvim_create_user_command("DisableHL" .. mod_name, function()
+    api.nvim_create_user_command("DisableCC" .. mod_name, function()
         self:disable()
     end, {})
 end

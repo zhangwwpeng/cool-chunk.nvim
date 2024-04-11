@@ -1,4 +1,5 @@
 local BaseMod = require("hlchunk.base_mod")
+local Array = require("hlchunk.utils.array")
 local utils = require("hlchunk.utils.utils")
 local ft = require("hlchunk.utils.filetype")
 local api = vim.api
@@ -60,19 +61,25 @@ function line_num_mod:render()
 end
 
 function line_num_mod:set_hl()
+    local token_array = Array:from(self.name:split("_"))
+    local mod_name = token_array
+        :map(function(value)
+            return value:firstToUpper()
+        end)
+        :join()
     if string.sub(self.options.hl_group.chunk, 1, 1) == '#' then
         local fg = self.options.hl_group.chunk
-        self.options.hl_group.chunk = "HLChunkLineNumChunk"
+        self.options.hl_group.chunk = BaseMod.name .. mod_name .. "Chunk"
         api.nvim_set_hl(0, self.options.hl_group.chunk, { fg = fg })
     end
     if string.sub(self.options.hl_group.context, 1, 1) == '#' then
         local fg = self.options.hl_group.context
-        self.options.hl_group.context = "HLChunkLineNumContext"
+        self.options.hl_group.chunk = BaseMod.name .. mod_name .. "Context"
         api.nvim_set_hl(0, self.options.hl_group.context, { fg = fg })
     end
     if string.sub(self.options.hl_group.error, 1, 1) == '#' then
         local fg = self.options.hl_group.error
-        self.options.hl_group.error = "HLChunkLineNumError"
+        self.options.hl_group.chunk = BaseMod.name .. mod_name .. "Error"
         api.nvim_set_hl(0, self.options.hl_group.error, { fg = fg })
     end
 end

@@ -1,6 +1,7 @@
 local BaseMod = require("hlchunk.base_mod")
 local utils = require("hlchunk.utils.utils")
 local ft = require("hlchunk.utils.filetype")
+local Array = require("hlchunk.utils.array")
 local api = vim.api
 local fn = vim.fn
 
@@ -98,6 +99,13 @@ function context_mod:set_keymap()
     if #textobject == 0 then
         return
     end
+
+    local token_array = Array:from(self.name:split("_"))
+    local mod_name = token_array
+        :map(function(value)
+            return value:firstToUpper()
+        end)
+        :join()
     vim.keymap.set({ "x", "o" }, textobject, function()
         local cur_ctx_range = utils.get_ctx_range(self)
         if not cur_ctx_range then
@@ -114,13 +122,20 @@ function context_mod:set_keymap()
         api.nvim_win_set_cursor(0, { s_row, 0 })
         vim.cmd("normal! V")
         api.nvim_win_set_cursor(0, { e_row, 0 })
-    end)
+    end, { noremap = true, desc = BaseMod.name .. mod_name })
 end
 
 function context_mod:set_hl()
     if string.sub(self.options.hl_group.context, 1, 1) == "#" then
         local fg = self.options.hl_group.context
-        self.options.hl_group.context = "HLChunkContext"
+
+        local token_array = Array:from(self.name:split("_"))
+        local mod_name = token_array
+            :map(function(value)
+                return value:firstToUpper()
+            end)
+            :join()
+        self.options.hl_group.context = BaseMod.name .. mod_name .. "context"
         api.nvim_set_hl(0, self.options.hl_group.context, { fg = fg })
     end
 end

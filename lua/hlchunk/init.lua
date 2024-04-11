@@ -30,14 +30,14 @@ end
 -- set user commands to enable/disable all mods for those which has been enabled in config file or default config
 ---@param mods_status table<string, boolean>
 local function set_usercmds(mods_status)
-    api.nvim_create_user_command("EnableHL", function()
+    api.nvim_create_user_command("EnableCC", function()
         for mod_name, enabled in pairs(mods_status) do
             if enabled then
                 require("hlchunk.mods")[mod_name]:enable()
             end
         end
     end, {})
-    api.nvim_create_user_command("DisableHL", function()
+    api.nvim_create_user_command("DisableCC", function()
         for mod_name, enabled in pairs(mods_status) do
             if enabled then
                 require("hlchunk.mods")[mod_name]:disable()

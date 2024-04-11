@@ -1,5 +1,6 @@
 local BaseMod = require("hlchunk.base_mod")
 local utils = require("hlchunk.utils.utils")
+local Array = require("hlchunk.utils.array")
 local ft = require("hlchunk.utils.filetype")
 local api = vim.api
 local fn = vim.fn
@@ -199,6 +200,13 @@ function chunk_mod:set_keymap()
     if #textobject == 0 then
         return
     end
+
+    local token_array = Array:from(self.name:split("_"))
+    local mod_name = token_array
+        :map(function(value)
+            return value:firstToUpper()
+        end)
+        :join()
     vim.keymap.set({ "x", "o" }, textobject, function()
         local retcode, cur_chunk_range = utils.get_chunk_range(self)
         if retcode ~= CHUNK_RANGE_RET.OK then
@@ -214,7 +222,7 @@ function chunk_mod:set_keymap()
         api.nvim_win_set_cursor(0, { s_row, 0 })
         vim.cmd("normal! V")
         api.nvim_win_set_cursor(0, { e_row, 0 })
-    end)
+    end, { noremap = true, desc = BaseMod.name .. mod_name })
 end
 
 function chunk_mod:del_keymap()
@@ -226,14 +234,20 @@ function chunk_mod:del_keymap()
 end
 
 function chunk_mod:set_hl()
+    local token_array = Array:from(self.name:split("_"))
+    local mod_name = token_array
+        :map(function(value)
+            return value:firstToUpper()
+        end)
+        :join()
     if string.sub(self.options.hl_group.chunk, 1, 1) == "#" then
         local fg = self.options.hl_group.chunk
-        self.options.hl_group.chunk = "HLChunkChunkChunk"
+        self.options.hl_group.chunk = BaseMod.name .. mod_name .. "Chunk"
         api.nvim_set_hl(0, self.options.hl_group.chunk, { fg = fg })
     end
     if string.sub(self.options.hl_group.error, 1, 1) == "#" then
         local fg = self.options.hl_group.error
-        self.options.hl_group.error = "HLChunkChunkError"
+        self.options.hl_group.error = BaseMod.name .. mod_name .. "Error"
         api.nvim_set_hl(0, self.options.hl_group.error, { fg = fg })
     end
 end
