@@ -1,50 +1,43 @@
 local Array = require("hlchunk.utils.array")
 local api = vim.api
-local fn = vim.fn
 
 ---@class BaseModOpts
----@field enable boolean
 ---@field hl_group table<string, string>
 ---@field exclude_filetypes table<string, boolean>
 ---@field support_filetypes table<string>
+---@field animate_duration number a animate duration
 ---@field notify boolean
 
+---@class timer
+
 ---@class RuntimeVar
----@field old_win_info table<number, number>
-
----@class MetaInfo
----@field name string
----@field ns_id number
----@field bufnr number buffer number
----@field augroup_name string
-
----@class RenderOpts
----@field lazy boolean
+---@field old_range table<number>
+---@field is_loaded boolean
+---@field is_enabled boolean
+---@field animate_timer timer
 
 ---@class BaseMod
 ---@field name string the name of mod, use Snake_case naming style, such as line_num
 ---@field ns_id number namespace id
 ---@field bufnr number buffer number
----@field old_win_info table used to record old window info such as leftcol, curline and top line and so on
 ---@field options BaseModOpts default config for mod, and user can change it when setup
 ---@field augroup_name string with format hl_{mod_name}_augroup, such as hl_chunk_augroup
----@field animate_duration number a animate duration
 local BaseMod = {
     name = "",
     options = {
-        enable = false,
-        style = "",
         exclude_filetypes = {},
         support_filetypes = {},
         notify = false,
         hl_group = {},
+        animate_duration = 0,
     },
     ns_id = -1,
     bufnr = 0,
-    old_win_info = fn.winsaveview(),
+    old_range = {},
+    is_loaded = false,
+    is_enabled = false,
     augroup_name = "",
     animate_timer = vim.loop.new_timer(),
-    animate_duration = 200,
 }
 
 ---@return BaseMod
@@ -60,11 +53,20 @@ end
 -- just enable a mod instance, called when the mod was disable or not init
 function BaseMod:enable()
     local ok, info = pcall(function()
-        self.options.enable = true
-        self:set_hl()
-        self:render()
+        if self.is_enabled then
+            return
+        end
+        self.is_enabled = true
+
+        if not self.is_loaded then
+            self:set_hl()
+            self:create_mod_usercmd()
+            self.is_loaded = true
+        end
         self:enable_mod_autocmd()
-        self:create_mod_usercmd()
+        self:render()
+
+        return true
     end)
     if not ok then
         self:notify(tostring(info))
@@ -74,17 +76,13 @@ end
 function BaseMod:enable_mod_autocmd()
     api.nvim_create_augroup(self.augroup_name, { clear = true })
 
-    local this = self
-    api.nvim_create_autocmd({ "ColorScheme" }, {
+    api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
         group = self.augroup_name,
-        pattern = "*",
+        pattern = self.options.support_filetypes,
         callback = function()
-            this:set_hl()
+            self:render()
         end,
     })
-end
-
-function BaseMod:extra()
 end
 
 function BaseMod:set_hl()
@@ -92,12 +90,15 @@ end
 
 function BaseMod:disable()
     local ok, info = pcall(function()
-        self.options.enable = false
-        for _, bufnr in pairs(api.nvim_list_bufs()) do
-            -- TODO: need change BaseMod:clear function
-            api.nvim_buf_clear_namespace(bufnr, self.ns_id, 0, -1)
+        if not self.is_enabled then
+            return
         end
+
+        self.is_enabled = false
         self:disable_mod_autocmd()
+        self:clear()
+
+        return true
     end)
     if not ok then
         self:notify(tostring(info))
@@ -110,14 +111,19 @@ end
 
 ---@param opts?  table
 ---@param len?   number
-function BaseMod:draw(opts, len)
+function BaseMod:draw_by_animate(opts, len)
     opts = opts or {}
 
     local index = 1
-    local interval = math.floor(self.animate_duration / len)
+    local interval = math.floor(self.options.animate_duration / len)
     local prev_opt = nil
     local prev_line = 0
-    self.animate_timer:start(interval, interval, vim.schedule_wrap(function()
+    self.animate_timer = vim.loop.new_timer()
+    self.animate_timer:start(0, interval, vim.schedule_wrap(function()
+        if index >= len then
+            return
+        end
+
         local row_opts = {
             virt_text_pos = "overlay",
             hl_mode = "combine",
@@ -138,17 +144,28 @@ function BaseMod:draw(opts, len)
 
         index = index + 1
         if index == len then
-            self.animate_timer:stop()
+            if not self.animate_timer:is_closing() then
+                self.animate_timer:close()
+            end
         end
     end))
+end
+
+function BaseMod:refresh(range)
+    self.ns_id = api.nvim_create_namespace(self.name)
+    self.bufnr = api.nvim_get_current_buf()
+    self.old_range = range or {}
 end
 
 function BaseMod:clear(line_start, line_end)
     line_start = line_start or 0
     line_end = line_end or -1
 
-    self.animate_timer:stop()
-    self.old_chunk_range = { 1, 1 }
+    if not self.animate_timer:is_closing() then
+        self.animate_timer:close()
+    end
+
+    self.old_range = {}
     self.bufnr = 0
 
     if self.ns_id ~= -1 then

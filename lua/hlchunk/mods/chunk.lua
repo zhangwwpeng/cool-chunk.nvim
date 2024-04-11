@@ -3,7 +3,6 @@ local utils = require("hlchunk.utils.utils")
 local ft = require("hlchunk.utils.filetype")
 local api = vim.api
 local fn = vim.fn
-local timer = require("hlchunk.utils.timer")
 local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 
 ---@class ChunkOpts: BaseModOpts
@@ -12,13 +11,10 @@ local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 ---@field error_sign boolean
 
 ---@class ChunkMod: BaseMod
----@field old_chunk_range table<number, number>
 ---@field options ChunkOpts
 local chunk_mod = BaseMod:new({
     name = "chunk",
-    old_chunk_range = { 1, 1 },
     options = {
-        enable = true,
         notify = true,
         support_filetypes = ft.support_filetypes,
         exclude_filetypes = ft.exclude_filetypes,
@@ -37,23 +33,26 @@ local chunk_mod = BaseMod:new({
         },
         textobject = "ah",
         error_sign = true,
+        animate_duration = 200,
     },
 })
 
 -- chunk_mod can use text object, so add a new function extra to handle it
 function chunk_mod:enable()
-    BaseMod.enable(self)
-    self:set_keymap()
+    if BaseMod.enable(self) then
+        self:set_keymap()
+    end
 end
 
 function chunk_mod:disable()
-    BaseMod.disable(self)
-    self:del_keymap()
+    if BaseMod.disable(self) then
+        self:del_keymap()
+    end
 end
 
 -- set new virtual text to the right place
 function chunk_mod:render()
-    if not self.options.enable or self.options.exclude_filetypes[vim.bo.ft] then
+    if not self.is_enabled or self.options.exclude_filetypes[vim.bo.ft] then
         return
     end
 
@@ -66,17 +65,16 @@ function chunk_mod:render()
         hl_group = self.options.hl_group.error
     end
 
-    if cur_chunk_range[1] == self.old_chunk_range[1] and
-        cur_chunk_range[2] == self.old_chunk_range[2] then
+    if #self.old_range > 1 and
+        cur_chunk_range[1] == self.old_range[1] and
+        cur_chunk_range[2] == self.old_range[2] then
         return
     end
 
     self:clear()
-    self.ns_id = api.nvim_create_namespace(self.name)
-    self.old_chunk_range = cur_chunk_range
-    self.bufnr = api.nvim_get_current_buf()
+    self:refresh(cur_chunk_range)
 
-    if cur_chunk_range[2] - cur_chunk_range[1] >= math.floor(api.nvim_win_get_height(0) / 2) then
+    if cur_chunk_range[2] - cur_chunk_range[1] >= api.nvim_win_get_height(0) then
         chunk_mod:draw_by_direct(cur_chunk_range, hl_group)
     else
         chunk_mod:draw_by_animate(cur_chunk_range, hl_group)
@@ -187,19 +185,7 @@ function chunk_mod:draw_by_animate(range, hl_group)
         opts.line_num[i - start_range] = line_num
     end
 
-    self:draw(opts, end_range - start_range)
-end
-
-function chunk_mod:enable_mod_autocmd()
-    BaseMod.enable_mod_autocmd(self)
-
-    api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-        group = self.augroup_name,
-        pattern = self.options.support_filetypes,
-        callback = function()
-            chunk_mod:render()
-        end,
-    })
+    BaseMod.draw_by_animate(self, opts, end_range - start_range)
 end
 
 function chunk_mod:set_keymap()

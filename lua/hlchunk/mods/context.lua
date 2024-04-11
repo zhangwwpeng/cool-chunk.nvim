@@ -13,7 +13,6 @@ local fn = vim.fn
 local context_mod = BaseMod:new({
     name = "context",
     options = {
-        enable = false,
         notify = true,
         chars = {
             "│",
@@ -28,24 +27,40 @@ local context_mod = BaseMod:new({
 
 -- chunk_mod can use text object, so add a new function extra to handle it
 function context_mod:enable()
-    BaseMod.enable(self)
-    self:extra()
-    self:set_hl()
+    if BaseMod.enable(self) then
+        self:set_keymap()
+    end
+end
+
+function context_mod:disable()
+    if BaseMod.disable(self) then
+        self:del_keymap()
+    end
 end
 
 function context_mod:render()
-    if (not self.options.enable) or self.options.exclude_filetypes[vim.bo.filetype] then
+    if (not self.is_enabled) or self.options.exclude_filetypes[vim.bo.filetype] then
+        return
+    end
+
+    local ctx_range = utils.get_ctx_range(self)
+    if not ctx_range then
+        self:clear()
+        return
+    end
+
+    local ctx_col, beg_row, end_row = unpack(ctx_range)
+
+    if #self.old_range > 2 and
+        ctx_range[1] == self.old_range[1] and
+        ctx_range[2] == self.old_range[2] and
+        ctx_range[3] == self.old_range[3] then
         return
     end
 
     self:clear()
-    self.ns_id = api.nvim_create_namespace(self.name)
+    self:refresh(ctx_range)
 
-    local ctx_range = utils.get_ctx_range(self)
-    if not ctx_range then
-        return
-    end
-    local ctx_col, beg_row, end_row = unpack(ctx_range)
 
     local shiftwidth = fn.shiftwidth()
     local row_opts = {
@@ -64,35 +79,21 @@ function context_mod:render()
         local line_val = fn.getline(i):gsub("\t", space_tab)
         if #fn.getline(i) <= ctx_col or line_val:sub(ctx_col + 1, ctx_col + 1):match("%s") then
             if utils.col_in_screen(ctx_col) then
-                api.nvim_buf_set_extmark(0, self.ns_id, i - 1, 0, row_opts)
+                api.nvim_buf_set_extmark(self.bufnr, self.ns_id, i - 1, 0, row_opts)
             end
         end
     end
 end
 
-function context_mod:enable_mod_autocmd()
-    BaseMod.enable_mod_autocmd(self)
-
-    api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-        group = self.augroup_name,
-        pattern = "*",
-        callback = function()
-            context_mod:render()
-        end,
-    })
-
-    return
-
-        api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
-            group = self.augroup_name,
-            pattern = "*",
-            callback = function()
-                context_mod:render()
-            end,
-        })
+function context_mod:del_keymap()
+    local textobject = self.options.textobject
+    if #textobject == 0 then
+        return
+    end
+    vim.keymap.del({ "x", "o" }, textobject)
 end
 
-function context_mod:extra()
+function context_mod:set_keymap()
     local textobject = self.options.textobject
     if #textobject == 0 then
         return

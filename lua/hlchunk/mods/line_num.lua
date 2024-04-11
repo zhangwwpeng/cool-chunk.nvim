@@ -12,7 +12,6 @@ local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 local line_num_mod = BaseMod:new({
     name = "line_num",
     options = {
-        enable = true,
         notify = true,
         hl_group = {
             chunk = "CursorLineNr",
@@ -25,12 +24,12 @@ local line_num_mod = BaseMod:new({
 })
 
 function line_num_mod:render()
-    if not self.options.enable or self.options.exclude_filetypes[vim.bo.ft] then
+    if not self.is_enabled or self.options.exclude_filetypes[vim.bo.ft] then
         return
     end
 
     self:clear()
-    self.ns_id = api.nvim_create_namespace(self.name)
+    self:refresh()
 
     local retcode, chunk_range = utils.get_chunk_range(self)
     local hl_chunk
@@ -45,7 +44,7 @@ function line_num_mod:render()
         for i = beg_row, end_row do
             local row_opts = {}
             row_opts.number_hl_group = hl_chunk
-            api.nvim_buf_set_extmark(0, self.ns_id, i - 1, 0, row_opts)
+            api.nvim_buf_set_extmark(self.bufnr, self.ns_id, i - 1, 0, row_opts)
         end
     end
 
@@ -55,31 +54,9 @@ function line_num_mod:render()
         for i = beg_row, end_row do
             local row_opts = {}
             row_opts.number_hl_group = self.options.hl_group.context
-            api.nvim_buf_set_extmark(0, self.ns_id, i - 1, 0, row_opts)
+            api.nvim_buf_set_extmark(self.bufnr, self.ns_id, i - 1, 0, row_opts)
         end
     end
-end
-
-function line_num_mod:enable_mod_autocmd()
-    BaseMod.enable_mod_autocmd(self)
-
-    api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-        group = self.augroup_name,
-        pattern = self.options.support_filetypes,
-        callback = function()
-            line_num_mod:render()
-        end,
-    })
-
-    return
-
-        api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
-            group = self.augroup_name,
-            pattern = "*",
-            callback = function()
-                line_num_mod:render()
-            end,
-        })
 end
 
 function line_num_mod:set_hl()

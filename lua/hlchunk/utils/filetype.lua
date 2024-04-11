@@ -1,5 +1,6 @@
 local M = {}
 
+
 M.support_filetypes = {
     "*.ts",
     "*.tsx",
