@@ -34,6 +34,7 @@ function line_num_mod:render()
 
     local retcode, chunk_range = utils.get_chunk_range(self)
     local hl_chunk
+    local overlap = {}
     if retcode == CHUNK_RANGE_RET.OK then
         hl_chunk = self.options.hl_group.chunk
     elseif retcode == CHUNK_RANGE_RET.CHUNK_ERR then
@@ -43,9 +44,10 @@ function line_num_mod:render()
     if hl_chunk then
         local beg_row, end_row = unpack(chunk_range)
         for i = beg_row, end_row do
-            local row_opts = {}
-            row_opts.number_hl_group = hl_chunk
-            api.nvim_buf_set_extmark(self.bufnr, self.ns_id, i - 1, 0, row_opts)
+            local row_opts = {
+                number_hl_group = hl_chunk
+            }
+            overlap[i] = api.nvim_buf_set_extmark(self.bufnr, self.ns_id, i - 1, 0, row_opts)
         end
     end
 
@@ -53,8 +55,10 @@ function line_num_mod:render()
     if ctx_range then
         local _, beg_row, end_row = unpack(ctx_range)
         for i = beg_row, end_row do
-            local row_opts = {}
-            row_opts.number_hl_group = self.options.hl_group.context
+            local row_opts = {
+                number_hl_group = self.options.hl_group.context,
+                id = overlap[i]
+            }
             api.nvim_buf_set_extmark(self.bufnr, self.ns_id, i - 1, 0, row_opts)
         end
     end
