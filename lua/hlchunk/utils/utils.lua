@@ -1,5 +1,5 @@
 local ft = require("hlchunk.utils.ts_node_type")
-local fn = vim.fn
+local api = vim.api
 local treesitter = vim.treesitter
 
 local function is_suit_type(node_type)
@@ -34,6 +34,7 @@ M.CHUNK_RANGE_RET = {
 }
 
 ---@param mod BaseMod
+---@param jump boolean is jump to context
 ---@return CHUNK_RANGE_RETCODE enum
 ---@return table<number, number>
 ---@diagnostic disable-next-line: unused-local
@@ -54,110 +55,78 @@ function M.get_chunk_range(mod)
     return M.CHUNK_RANGE_RET.NO_CHUNK, {}
 end
 
+function M.get_ctx_jump(mod)
+    local cur_row, cur_col = unpack(api.nvim_win_get_cursor(0))
+    local get_indent = require("nvim-treesitter.indent").get_indent
+    local cur_indent = get_indent(cur_row)
+    local cur_node = treesitter.get_node()
+    while cur_node do
+        local start_row, start_col, end_row, end_col = cur_node:range()
+        local start_indent = get_indent(start_row + 1)
+        local end_indent = get_indent(end_row + 1)
+        if start_row == end_row then
+            goto continue
+        end
+
+        if start_indent <= end_indent then
+            if cur_indent > start_indent then
+                goto ret
+            elseif cur_node:type() == "block" then
+                goto continue
+            elseif (cur_row == start_row + 1 or cur_row == end_row + 1) or
+                cur_node:type() == "if_statement" then
+                goto ret
+            else
+                goto continue
+            end
+
+            ::ret::
+            if cur_row == start_row + 1 and cur_col == start_col or
+                cur_row == end_row + 1 and cur_col == end_col - 1 then
+                goto continue
+            end
+
+            return { start_row + 1, start_col + 1, end_row + 1, end_col }
+        end
+
+        ::continue::
+        cur_node = cur_node:parent()
+    end
+end
+
 ---@param mod BaseMod
 ---@return table<number, number> | nil not include end point
 function M.get_ctx_range(mod)
+    local cur_row, _ = unpack(api.nvim_win_get_cursor(0))
     local get_indent = require("nvim-treesitter.indent").get_indent
-    local cur_line = fn.line(".")
-    local cur_indent = get_indent(cur_line)
-
-    if cur_indent < fn.shiftwidth() or
-        cur_line == 1 or
-        cur_line == fn.line("$") then
-        return nil
-    end
-
-    local ctx_indent = 0
-    local pre_indent, next_indent = get_indent(cur_line - 1), get_indent(cur_line + 1)
-    local extend_up, extend_down = false, false
-    if next_indent == cur_indent then
-        if pre_indent < cur_indent then
-            ctx_indent = cur_indent - fn.shiftwidth()
-            extend_down = true
-        elseif pre_indent == cur_indent then
-            ctx_indent = cur_indent - fn.shiftwidth()
-            extend_up = true
-            extend_down = true
-        else
-            extend_up = true
-            ctx_indent = cur_indent
+    local cur_indent = get_indent(cur_row)
+    local cur_node = treesitter.get_node()
+    while cur_node do
+        local start_row, _, end_row, _ = cur_node:range()
+        local start_indent = get_indent(start_row + 1)
+        local end_indent = get_indent(end_row + 1)
+        local res = { start_indent, start_row + 2, end_row }
+        if start_row == end_row then
+            goto continue
         end
-    elseif pre_indent == cur_indent then
-        if next_indent < cur_indent then
-            ctx_indent = cur_indent - fn.shiftwidth()
-            extend_up = true
-        else
-            extend_down = true
-            ctx_indent = cur_indent
-        end
-    elseif pre_indent < cur_indent and cur_indent < next_indent then
-        ctx_indent = cur_indent
-        extend_down = true
-    elseif pre_indent > cur_indent and cur_indent > next_indent then
-        extend_up = true
-        ctx_indent = cur_indent
-    elseif pre_indent < cur_indent and next_indent < cur_indent then
-        ctx_indent = cur_indent - fn.shiftwidth()
-    elseif pre_indent > cur_indent and next_indent > cur_indent then
-        ctx_indent = cur_indent
-        extend_up = true
-    end
 
-    local beg_line, end_line = cur_line, cur_line
-    if extend_up then
-        for i = cur_line - 1, 1, -1 do
-            if get_indent(i) == ctx_indent then
-                beg_line = i + 1
-                break
+        if start_indent < end_indent then
+            res = { start_indent, start_row + 2, end_row + 1 }
+        end
+        if start_indent <= end_indent then
+            if cur_indent > start_indent then
+                return res
+            elseif cur_node:type() == "block" then
+                goto continue
+            elseif (cur_row == start_row + 1 or cur_row == end_row + 1) or
+                cur_node:type() == "if_statement" then
+                return res
             end
         end
-    else
-        if ctx_indent ~= cur_indent then
-            beg_line = cur_line
-        else
-            beg_line = cur_line + 1
-        end
-    end
 
-    if extend_down then
-        for i = cur_line + 1, fn.line("$"), 1 do
-            if get_indent(i) == ctx_indent then
-                end_line = i - 1
-                break
-            end
-        end
-    else
-        if ctx_indent ~= cur_indent then
-            end_line = cur_line
-        else
-            end_line = cur_line - 1
-        end
+        ::continue::
+        cur_node = cur_node:parent()
     end
-
-    local by_node = function()
-        local cursor_node = treesitter.get_node()
-        while cursor_node do
-            local start_row, _, end_row, _ = cursor_node:range()
-            local start_indent = get_indent(start_row + 1)
-            if start_row ~= end_row and
-                start_indent == get_indent(end_row + 1) and
-                start_indent < cur_indent then
-                return start_indent, start_row + 2, end_row
-            end
-            cursor_node = cursor_node:parent()
-        end
-    end
-
-    if pre_indent <= cur_indent and cur_indent <= next_indent then
-        local indent, beg_row, end_row = by_node()
-        if end_row < end_line then
-            return { indent, beg_row, end_row }
-        end
-    elseif next_indent < cur_indent then
-        return { by_node() }
-    end
-
-    return { ctx_indent, beg_line, end_line }
 end
 
 ---@param col number the column number

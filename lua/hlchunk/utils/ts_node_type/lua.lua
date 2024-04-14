@@ -39,4 +39,5 @@ return {
     while_do = "while_do",
     while_end = "while_end",
     while_start = "while_start",
+    call_expression = "call_expression",
 }

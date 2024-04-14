@@ -23,6 +23,7 @@ M.default = {
     "tuple",
     "do_block",
     "return",
+    "call_expression",
 }
 
 return M
