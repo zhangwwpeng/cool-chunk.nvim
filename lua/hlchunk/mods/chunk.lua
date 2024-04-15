@@ -13,6 +13,7 @@ local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 
 ---@class ChunkMod: BaseMod
 ---@field options ChunkOpts
+---@field textobject_buffers table<number>
 local chunk_mod = BaseMod:new({
     name = "chunk",
     options = {
@@ -36,20 +37,8 @@ local chunk_mod = BaseMod:new({
         error_sign = true,
         animate_duration = 200,
     },
+    textobject_buffers = {},
 })
-
--- chunk_mod can use text object, so add a new function extra to handle it
-function chunk_mod:enable()
-    if BaseMod.enable(self) then
-        self:set_keymap()
-    end
-end
-
-function chunk_mod:disable()
-    if BaseMod.disable(self) then
-        self:del_keymap()
-    end
-end
 
 -- set new virtual text to the right place
 function chunk_mod:render()
@@ -195,42 +184,68 @@ function chunk_mod:draw_by_animate(range, hl_group)
     BaseMod.draw_by_animate(self, opts, end_range - start_range)
 end
 
-function chunk_mod:set_keymap()
-    local textobject = self.options.textobject
-    if #textobject == 0 then
-        return
-    end
+function chunk_mod:enable_mod_autocmd()
+    BaseMod.enable_mod_autocmd(self)
 
-    local token_array = Array:from(self.name:split("_"))
-    local mod_name = token_array
-        :map(function(value)
-            return value:firstToUpper()
-        end)
-        :join()
-    vim.keymap.set({ "x", "o" }, textobject, function()
-        local retcode, cur_chunk_range = utils.get_chunk_range(self)
-        if retcode ~= CHUNK_RANGE_RET.OK then
-            return
-        end
-        local s_row, e_row = unpack(cur_chunk_range)
-        local ctrl_v = api.nvim_replace_termcodes("<C-v>", true, true, true)
-        local cur_mode = vim.fn.mode()
-        if cur_mode == "v" or cur_mode == "V" or cur_mode == ctrl_v then
-            vim.cmd("normal! " .. cur_mode)
-        end
+    api.nvim_create_autocmd(
+        { "Filetype" },
+        {
+            group = self.augroup_name,
+            pattern = self.options.support_filetypes,
+            callback = function()
+                local textobject = self.options.textobject
+                if #textobject == 0 then
+                    return
+                end
 
-        api.nvim_win_set_cursor(0, { s_row, 0 })
-        vim.cmd("normal! V")
-        api.nvim_win_set_cursor(0, { e_row, 0 })
-    end, { noremap = true, desc = BaseMod.name .. mod_name })
+                local bufnr = api.nvim_get_current_buf()
+                if self.textobject_buffers[bufnr] then
+                    return
+                end
+                self.textobject_buffers[bufnr] = true
+
+                local token_array = Array:from(self.name:split("_"))
+                local mod_name = token_array
+                    :map(function(value)
+                        return value:firstToUpper()
+                    end)
+                    :join()
+
+                vim.keymap.set({ "x", "o" }, textobject, function()
+                    if self.options.exclude_filetypes[vim.bo.ft] then
+                        return
+                    end
+
+                    local retcode, cur_chunk_range = utils.get_chunk_range(self)
+                    if retcode ~= CHUNK_RANGE_RET.OK then
+                        return
+                    end
+                    local s_row, e_row = unpack(cur_chunk_range)
+                    local ctrl_v = api.nvim_replace_termcodes("<C-v>", true, true, true)
+                    local cur_mode = vim.fn.mode()
+                    if cur_mode == "v" or cur_mode == "V" or cur_mode == ctrl_v then
+                        vim.cmd("normal! " .. cur_mode)
+                    end
+
+                    api.nvim_win_set_cursor(0, { s_row, 0 })
+                    vim.cmd("normal! V")
+                    api.nvim_win_set_cursor(0, { e_row, 0 })
+                end, { noremap = true, desc = BaseMod.name .. mod_name, buffer = bufnr })
+            end
+        }
+    )
 end
 
-function chunk_mod:del_keymap()
+function chunk_mod:disable_mod_autocmd()
+    BaseMod.disable_mod_autocmd(self)
+
     local textobject = self.options.textobject
-    if #textobject == 0 then
-        return
+    if #textobject ~= 0 then
+        for bufnr in pairs(self.textobject_buffers) do
+            vim.keymap.del({ "x", "o" }, textobject, { buffer = bufnr })
+        end
     end
-    vim.keymap.del({ "x", "o" }, textobject)
+    self.textobject_buffers = {}
 end
 
 function chunk_mod:set_hl()

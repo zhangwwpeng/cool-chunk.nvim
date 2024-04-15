@@ -77,7 +77,7 @@ function BaseMod:enable_mod_autocmd()
 
     api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
         group = self.augroup_name,
-        pattern = self.options.support_filetypes,
+        pattern = utils.filetype2pattern(self.options.support_filetypes),
         callback = function()
             self:render()
         end,

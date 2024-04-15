@@ -1,5 +1,6 @@
 local ft = require("hlchunk.utils.ts_node_type")
 local api = vim.api
+local fn = vim.fn
 local treesitter = vim.treesitter
 
 local function is_suit_type(node_type)
@@ -60,6 +61,7 @@ function M.get_ctx_jump(mod)
     local get_indent = require("nvim-treesitter.indent").get_indent
     local cur_indent = get_indent(cur_row)
     local cur_node = treesitter.get_node()
+    local res
     while cur_node do
         local start_row, start_col, end_row, end_col = cur_node:range()
         local start_indent = get_indent(start_row + 1)
@@ -86,12 +88,15 @@ function M.get_ctx_jump(mod)
                 goto continue
             end
 
-            return { start_row + 1, start_col + 1, end_row + 1, end_col }
+            res = { start_row + 1, start_indent, end_row + 1, #fn.getline(end_row + 1) }
+            break
         end
 
         ::continue::
         cur_node = cur_node:parent()
     end
+
+    return res
 end
 
 ---@param mod BaseMod
@@ -134,6 +139,23 @@ end
 function M.col_in_screen(col)
     local leftcol = vim.fn.winsaveview().leftcol
     return col >= leftcol
+end
+
+M.filetype_pattern = {
+    rust = "rs",
+    python = "py",
+}
+
+function M.filetype2pattern(t)
+    local patterns = {}
+    for _, v in ipairs(t) do
+        if M.filetype_pattern[v] then
+            v = M.filetype_pattern[v]
+        end
+        table.insert(patterns, "*." .. v)
+    end
+
+    return patterns
 end
 
 return M
