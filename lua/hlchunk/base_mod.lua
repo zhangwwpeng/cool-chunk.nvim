@@ -1,7 +1,6 @@
 local Array = require("hlchunk.utils.array")
 local api = vim.api
 local utils = require("hlchunk.utils.utils")
-local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 
 ---@class BaseModOpts
 ---@field hl_group table<string, string>

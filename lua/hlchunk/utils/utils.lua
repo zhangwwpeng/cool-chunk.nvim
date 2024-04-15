@@ -35,7 +35,6 @@ M.CHUNK_RANGE_RET = {
 }
 
 ---@param mod BaseMod
----@param jump boolean is jump to context
 ---@return CHUNK_RANGE_RETCODE enum
 ---@return table<number, number>
 ---@diagnostic disable-next-line: unused-local
@@ -56,6 +55,9 @@ function M.get_chunk_range(mod)
     return M.CHUNK_RANGE_RET.NO_CHUNK, {}
 end
 
+---@param mod BaseMod
+---@return table<number, number>
+---@diagnostic disable-next-line: unused-local
 function M.get_ctx_jump(mod)
     local cur_row, cur_col = unpack(api.nvim_win_get_cursor(0))
     local get_indent = require("nvim-treesitter.indent").get_indent
@@ -101,6 +103,7 @@ end
 
 ---@param mod BaseMod
 ---@return table<number, number> | nil not include end point
+---@diagnostic disable-next-line: unused-local
 function M.get_ctx_range(mod)
     local cur_row, _ = unpack(api.nvim_win_get_cursor(0))
     local get_indent = require("nvim-treesitter.indent").get_indent
