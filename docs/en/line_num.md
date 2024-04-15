@@ -29,7 +29,7 @@ support_filetypes = {
 
 below is the default style of indent line
 
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/25_hlchunk3.png">
+<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/25_cool-chunk3.png">
 
 ```lua
 line_num = {

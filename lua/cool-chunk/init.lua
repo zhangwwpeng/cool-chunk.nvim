@@ -1,4 +1,4 @@
-local hlchunk = {}
+local cool_chunk = {}
 local api = vim.api
 
 ---@class PlugConfig
@@ -33,31 +33,31 @@ local function set_usercmds(mods_status)
     api.nvim_create_user_command("EnableCC", function()
         for mod_name, enabled in pairs(mods_status) do
             if enabled then
-                require("hlchunk.mods")[mod_name]:enable()
+                require("cool-chunk.mods")[mod_name]:enable()
             end
         end
     end, {})
     api.nvim_create_user_command("DisableCC", function()
         for mod_name, enabled in pairs(mods_status) do
             if enabled then
-                require("hlchunk.mods")[mod_name]:disable()
+                require("cool-chunk.mods")[mod_name]:disable()
             end
         end
     end, {})
 end
 
 ---@param params PlugConfig
-hlchunk.setup = function(params)
-    require("hlchunk.utils.string") -- inject string functions
+cool_chunk.setup = function(params)
+    require("cool-chunk.utils.string") -- inject string functions
     local mods_status = get_mods_status(params)
     set_usercmds(mods_status)
     for mod_name, enabled in pairs(mods_status) do
         if enabled then
-            local mod = require("hlchunk.mods")[mod_name]
+            local mod = require("cool-chunk.mods")[mod_name]
             mod:set_options(params[mod_name])
             mod:enable()
         end
     end
 end
 
-return hlchunk
+return cool_chunk

@@ -1,4 +1,4 @@
-local ft = require("hlchunk.utils.ts_node_type")
+local ft = require("cool-chunk.utils.ts_node_type")
 local api = vim.api
 local fn = vim.fn
 local treesitter = vim.treesitter
@@ -17,7 +17,7 @@ local function is_suit_type(node_type)
     return false
 end
 
--- this is utils module for hlchunk every mod
+-- this is utils module for cool-chunk every mod
 -- every method in this module should pass arguments as follow
 -- 1. mod: BaseMod, for utils function to get mod options
 -- 2. normal arguments

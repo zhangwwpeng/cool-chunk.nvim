@@ -1,7 +1,7 @@
 local M = {}
 
-M.cpp = require("hlchunk.utils.ts_node_type.cpp")
-M.lua = require("hlchunk.utils.ts_node_type.lua")
+M.cpp = require("cool-chunk.utils.ts_node_type.cpp")
+M.lua = require("cool-chunk.utils.ts_node_type.lua")
 M.default = {
     "class",
     "^func",

@@ -1,7 +1,7 @@
-local BaseMod = require("hlchunk.base_mod")
-local utils = require("hlchunk.utils.utils")
-local ft = require("hlchunk.utils.filetype")
-local Array = require("hlchunk.utils.array")
+local BaseMod = require("cool-chunk.base_mod")
+local utils = require("cool-chunk.utils.utils")
+local ft = require("cool-chunk.utils.filetype")
+local Array = require("cool-chunk.utils.array")
 local api = vim.api
 local fn = vim.fn
 

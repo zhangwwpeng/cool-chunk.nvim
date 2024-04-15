@@ -1,7 +1,7 @@
 <div align='center'>
 <p><img width='400px' src='https://raw.githubusercontent.com/shellRaining/img/main/2305/01_logo_bg.png'></p>
 </div>
-<h1 align='center'>hlchunk.nvim</h1>
+<h1 align='center'>cool-chunk.nvim</h1>
 
 ## What can this plugin do
 
@@ -32,13 +32,13 @@ one picture to understand what these mods do
 ### chunk
 
 <a href='./docs/en/chunk.md#chunk_example1'>
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2303/08_hlchunk8.gif">
+<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2303/08_cool-chunk8.gif">
 </a>
 
 ### line_num
 
 <a href='./docs/en/line_num.md'>
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/25_hlchunk3.png">
+<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/25_cool-chunk3.png">
 </a>
 
 ## Requirements
@@ -50,18 +50,18 @@ neovim version `>= 0.9.0`
 ### Packer
 
 ```lua
-use { "shellRaining/hlchunk.nvim" }
+use { "shellRaining/cool-chunk.nvim" }
 ```
 
 ### Plug
 
 ```vimscript
 call plug#begin()
-Plug 'shellRaining/hlchunk.nvim'
+Plug 'shellRaining/cool-chunk.nvim'
 call plug#end()
 
 lua << EOF
-require("hlchunk").setup({})
+require("cool-chunk").setup({})
 EOF
 ```
 
@@ -69,10 +69,10 @@ EOF
 
 ```lua
 {
-  "shellRaining/hlchunk.nvim",
+  "shellRaining/cool-chunk.nvim",
   event = { "UIEnter" },
   config = function()
-    require("hlchunk").setup({})
+    require("cool-chunk").setup({})
   end
 },
 ```
@@ -89,7 +89,7 @@ The script comes with the following defaults:
     chunk = {
         enable = true,
         notify = true,
-        -- details about support_filetypes and exclude_filetypes in https://github.com/shellRaining/hlchunk.nvim/blob/main/lua/hlchunk/utils/filetype.lua
+        -- details about support_filetypes and exclude_filetypes in https://github.com/shellRaining/cool-chunk.nvim/blob/main/lua/cool-chunk/utils/filetype.lua
         support_filetypes = ft.support_filetypes,
         exclude_filetypes = ft.exclude_filetypes,
         chars = {
@@ -109,7 +109,7 @@ The script comes with the following defaults:
 
     line_num = {
         enable = true,
-        -- if hlchunk make your neovim slowly, set this option to true and try again
+        -- if cool-chunk make your neovim slowly, set this option to true and try again
         in_performance = false,
         style = "#806d9c",
     },
@@ -125,7 +125,7 @@ The script comes with the following defaults:
 setup example:
 
 ```lua
-require('hlchunk').setup({
+require('cool-chunk').setup({
     chunk = {
         enable = true,
         notify = true,
@@ -146,7 +146,7 @@ require('hlchunk').setup({
 
     line_num = {
         enable = true,
-        -- if hlchunk make your neovim slowly, set this option to true and try again
+        -- if cool-chunk make your neovim slowly, set this option to true and try again
         in_performance = false,
         style = "#806d9c",
     },
@@ -165,8 +165,8 @@ this plugin provides some commands to switch plugin status, which are listed bel
 
 the two commands are used to switch the whole plugin status, when use `DisableHL`, include `hl_chunk` and `hl_indent` will be disable
 
-- DisableHLChunk
-- EnableHLChunk
+- Disablecool-chunk
+- Enablecool-chunk
 
 the two will control `hl_chunk`
 

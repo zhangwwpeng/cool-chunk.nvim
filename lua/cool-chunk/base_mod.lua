@@ -1,6 +1,6 @@
-local Array = require("hlchunk.utils.array")
+local Array = require("cool-chunk.utils.array")
 local api = vim.api
-local utils = require("hlchunk.utils.utils")
+local utils = require("cool-chunk.utils.utils")
 
 ---@class BaseModOpts
 ---@field hl_group table<string, string>

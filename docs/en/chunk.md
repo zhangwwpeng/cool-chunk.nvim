@@ -20,11 +20,11 @@ chunk have four configurable items
 
 If set to false, the usercmd and autocmd it carries will not be generated, and the mod will be closed at this time
 
-`notify` is used to control whether to pop up a prompt in some cases (such as using the disableHLChunk command twice in a row), the default is true
+`notify` is used to control whether to pop up a prompt in some cases (such as using the disablecool-chunk command twice in a row), the default is true
 
 If set to false, vim's match will be used to highlight the code block, otherwise treesitter will be used to determine the current code block
 
-`exclude_filetypes` is a lua table type, example as follows, the default exclude_filetypes can be found in the [default config](../../lua/hlchunk/utils/filetype.lua)
+`exclude_filetypes` is a lua table type, example as follows, the default exclude_filetypes can be found in the [default config](../../lua/cool-chunk/utils/filetype.lua)
 
 ```lua
 exclude_filetypes = {
@@ -92,7 +92,7 @@ style = {
 
 below is the default style of chunk line
 
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/23_hlchunk1.png">
+<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/23_cool-chunk1.png">
 
 its configuration is
 
@@ -111,7 +111,7 @@ chunk = {
 
 <a id="chunk_example1">you can also set like this gif</a>
 
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2303/08_hlchunk8.gif">
+<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2303/08_cool-chunk8.gif">
 
 ```lua
 chunk = {
