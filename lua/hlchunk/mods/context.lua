@@ -49,7 +49,6 @@ function context_mod:render()
         self:clear()
         return
     end
-    vim.print(utils.get_ctx_jump(self), "===")
 
     local ctx_col, beg_row, end_row = unpack(ctx_range)
 

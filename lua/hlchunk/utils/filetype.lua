@@ -66,6 +66,9 @@ M.exclude_filetypes = {
     sagarename = true,
     cmp_menu = true,
     ["null-ls-info"] = true,
+    guihua = true,
+    http = true,
+    httpResult = true,
 }
 
 return M
