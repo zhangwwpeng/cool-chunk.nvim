@@ -78,10 +78,10 @@ function chunk_mod:render()
 end
 
 function chunk_mod:draw_by_direct(range, hl_group)
-    local get_indent = require("nvim-treesitter.indent").get_indent
+    local ts_get_indent = require("nvim-treesitter.indent").get_indent
     local beg_row, end_row = unpack(range)
-    local beg_blank_len = get_indent(beg_row)
-    local end_blank_len = get_indent(end_row)
+    local beg_blank_len = ts_get_indent(beg_row)
+    local end_blank_len = ts_get_indent(end_row)
     local shiftwidth = fn.shiftwidth()
     local start_col = math.max(math.min(beg_blank_len, end_blank_len) - shiftwidth, 0)
     local offset = fn.winsaveview().leftcol
@@ -109,7 +109,10 @@ function chunk_mod:draw_by_direct(range, hl_group)
 
         row_opts.virt_text = { { beg_virt_text, hl_group } }
         row_opts.virt_text_win_col = math.max(start_col - offset, 0)
-        api.nvim_buf_set_extmark(0, self.ns_id, beg_row - 1, 0, row_opts)
+        local indent = vim.fn.indent(beg_row)
+        if indent == 0 or indent > row_opts.virt_text_win_col then
+            api.nvim_buf_set_extmark(0, self.ns_id, beg_row - 1, 0, row_opts)
+        end
     end
 
     -- render end_row
@@ -129,7 +132,10 @@ function chunk_mod:draw_by_direct(range, hl_group)
         end
         row_opts.virt_text = { { end_virt_text, hl_group } }
         row_opts.virt_text_win_col = math.max(start_col - offset, 0)
-        api.nvim_buf_set_extmark(0, self.ns_id, end_row - 1, 0, row_opts)
+        local indent = vim.fn.indent(end_row)
+        if indent == 0 or indent > row_opts.virt_text_win_col then
+            api.nvim_buf_set_extmark(0, self.ns_id, end_row - 1, 0, row_opts)
+        end
     end
 
     -- render middle section
@@ -140,7 +146,10 @@ function chunk_mod:draw_by_direct(range, hl_group)
         local line_val = fn.getline(i):gsub("\t", space_tab)
         if #line_val <= start_col or fn.indent(i) > start_col then
             if utils.col_in_screen(start_col) then
-                api.nvim_buf_set_extmark(0, self.ns_id, i - 1, 0, row_opts)
+                local indent = vim.fn.indent(i)
+                if indent == 0 or indent > row_opts.virt_text_win_col then
+                    api.nvim_buf_set_extmark(0, self.ns_id, i - 1, 0, row_opts)
+                end
             end
         end
     end

@@ -77,11 +77,17 @@ function context_mod:render()
         row_opts.virt_text_win_col = ctx_col - offset
         local space_tab = (" "):rep(shiftwidth)
         local line_val = fn.getline(i):gsub("\t", space_tab)
+        local indent = vim.fn.indent(i)
+        if indent ~= 0 and indent <= row_opts.virt_text_win_col then
+            goto continue
+        end
         if #fn.getline(i) <= ctx_col or line_val:sub(ctx_col + 1, ctx_col + 1):match("%s") then
             if utils.col_in_screen(ctx_col) then
                 api.nvim_buf_set_extmark(self.bufnr, self.ns_id, i - 1, 0, row_opts)
             end
         end
+
+        ::continue::
     end
 end
 

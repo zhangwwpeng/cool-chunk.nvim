@@ -111,6 +111,7 @@ function BaseMod:draw_by_animate(opts, len)
     local interval = math.floor(self.options.animate_duration / len)
     local prev_opt = nil
     local prev_line = 0
+    local get_indent = vim.fn.indent
     self.animate_timer = vim.loop.new_timer()
     self.animate_timer:start(0, interval, vim.schedule_wrap(function()
         if index >= len then
@@ -125,15 +126,21 @@ function BaseMod:draw_by_animate(opts, len)
 
         row_opts.virt_text = { { opts.virt_text[index][1], opts.hl_group } }
         row_opts.virt_text_win_col = opts.offset[index]
-        local id = api.nvim_buf_set_extmark(opts.bufnr, self.ns_id, opts.line_num[index] - 1, 0, row_opts)
+        local id
+        local indent = get_indent(opts.line_num[index])
+        if indent == 0 or indent > row_opts.virt_text_win_col then
+            id = api.nvim_buf_set_extmark(opts.bufnr, self.ns_id, opts.line_num[index] - 1, 0, row_opts)
+        end
 
         if prev_opt then
             api.nvim_buf_set_extmark(opts.bufnr, self.ns_id, prev_line, 0, prev_opt)
         end
         prev_line = opts.line_num[index] - 1
-        prev_opt = row_opts
-        prev_opt.id = id
-        prev_opt.virt_text = { { opts.virt_text[index][2], opts.hl_group } }
+        if id then
+            prev_opt = row_opts
+            prev_opt.id = id
+            prev_opt.virt_text = { { opts.virt_text[index][2], opts.hl_group } }
+        end
 
         index = index + 1
         if index == len then
