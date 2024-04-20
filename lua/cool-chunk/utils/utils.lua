@@ -55,6 +55,33 @@ function M.get_chunk_range(mod)
     return M.CHUNK_RANGE_RET.NO_CHUNK, {}
 end
 
+local function get_valid_range(cur_node, cur_row, cur_indent)
+    local start_row, start_col, end_row, end_col = cur_node:range()
+    local get_indent = require("nvim-treesitter.indent").get_indent
+    local start_indent = get_indent(start_row + 1)
+    local end_indent = get_indent(end_row + 1)
+    local res = { start_indent, start_row + 1, start_col, end_row + 1, end_col }
+    if start_row == end_row then
+        return nil
+    end
+
+    if start_indent < end_indent and cur_node:type() == "elseif_statement" then
+        res = { start_indent, start_row + 1, start_col, end_row + 2, end_col }
+    end
+    if start_indent <= end_indent then
+        if cur_indent > start_indent then
+            return res
+        elseif cur_node:type() == "block" then
+            return false
+        elseif (cur_row == start_row + 1 or cur_row == end_row + 1) or
+            cur_node:type() == "if_statement" then
+            return res
+        end
+    end
+
+    return false
+end
+
 ---@param mod BaseMod
 ---@return table<number, number>
 ---@diagnostic disable-next-line: unused-local
@@ -63,42 +90,20 @@ function M.get_ctx_jump(mod)
     local get_indent = require("nvim-treesitter.indent").get_indent
     local cur_indent = get_indent(cur_row)
     local cur_node = treesitter.get_node()
-    local res
     while cur_node do
-        local start_row, start_col, end_row, end_col = cur_node:range()
-        local start_indent = get_indent(start_row + 1)
-        local end_indent = get_indent(end_row + 1)
-        if start_row == end_row then
-            goto continue
+        local range = get_valid_range(cur_node, cur_row, cur_indent)
+        if range then
+            local indent, start_row, start_col, end_row, end_col = unpack(range)
+            if (cur_row ~= start_row + 1 or cur_col ~= start_col) and
+                (cur_row ~= end_row + 1 or cur_col ~= end_col - 1) then
+                return { start_row, indent, end_row, #fn.getline(end_row + 1) }
+            end
         end
 
-        if start_indent <= end_indent then
-            if cur_indent > start_indent then
-                goto ret
-            elseif cur_node:type() == "block" then
-                goto continue
-            elseif (cur_row == start_row + 1 or cur_row == end_row + 1) or
-                cur_node:type() == "if_statement" then
-                goto ret
-            else
-                goto continue
-            end
-
-            ::ret::
-            if cur_row == start_row + 1 and cur_col == start_col or
-                cur_row == end_row + 1 and cur_col == end_col - 1 then
-                goto continue
-            end
-
-            res = { start_row + 1, start_indent, end_row + 1, #fn.getline(end_row + 1) }
-            break
-        end
-
-        ::continue::
         cur_node = cur_node:parent()
     end
 
-    return res
+    return nil
 end
 
 ---@param mod BaseMod
@@ -110,29 +115,12 @@ function M.get_ctx_range(mod)
     local cur_indent = get_indent(cur_row)
     local cur_node = treesitter.get_node()
     while cur_node do
-        local start_row, _, end_row, _ = cur_node:range()
-        local start_indent = get_indent(start_row + 1)
-        local end_indent = get_indent(end_row + 1)
-        local res = { start_indent, start_row + 2, end_row }
-        if start_row == end_row then
-            goto continue
+        local range = get_valid_range(cur_node, cur_row, cur_indent)
+        if range then
+            local indent, start_row, _, end_row, _ = unpack(range)
+            return { indent, start_row + 1, end_row - 1 }
         end
 
-        if start_indent < end_indent then
-            res = { start_indent, start_row + 2, end_row + 1 }
-        end
-        if start_indent <= end_indent then
-            if cur_indent > start_indent then
-                return res
-            elseif cur_node:type() == "block" then
-                goto continue
-            elseif (cur_row == start_row + 1 or cur_row == end_row + 1) or
-                cur_node:type() == "if_statement" then
-                return res
-            end
-        end
-
-        ::continue::
         cur_node = cur_node:parent()
     end
 end
