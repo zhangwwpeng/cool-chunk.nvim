@@ -7,6 +7,7 @@ local utils = require("cool-chunk.utils.utils")
 ---@field exclude_filetypes table<string, boolean>
 ---@field support_filetypes table<string>
 ---@field animate_duration number a animate duration
+---@field fire_event table<string> a event for trigger
 ---@field notify boolean
 
 ---@class timer
@@ -32,6 +33,7 @@ local BaseMod = {
         notify = false,
         hl_group = {},
         animate_duration = 0,
+        fire_event = {},
     },
     ns_id = -1,
     bufnr = 0,
@@ -74,7 +76,7 @@ end
 function BaseMod:enable_mod_autocmd()
     api.nvim_create_augroup(self.augroup_name, { clear = true })
 
-    api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+    api.nvim_create_autocmd(self.options.fire_event, {
         group = self.augroup_name,
         pattern = utils.filetype2pattern(self.options.support_filetypes),
         callback = function()

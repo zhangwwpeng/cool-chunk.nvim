@@ -21,6 +21,7 @@ local line_num_mod = BaseMod:new({
         },
         support_filetypes = ft.support_filetypes,
         exclude_filetypes = ft.exclude_filetypes,
+        fire_event = { "CursorHold", "CursorHoldI" },
     },
 })
 

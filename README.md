@@ -1,45 +1,18 @@
-<div align='center'>
-<p><img width='400px' src='https://raw.githubusercontent.com/shellRaining/img/main/2305/01_logo_bg.png'></p>
-</div>
-<h1 align='center'>cool-chunk.nvim</h1>
-
 ## What can this plugin do
 
-similar to [indent-blankline](https://github.com/lukas-reineke/indent-blankline.nvim), this plugin can highlight the indent line, and highlight the code chunk according to the current cursor position.
+forked from [hlchunk](https://github.com/shellRaining/hlchunk.nvim). removed indent(if you wnat to used it, recommend [indent-blankline](https://github.com/lukas-reineke/indent-blankline.nvim)), keep chunk and context and line_num. simple and faster and cool.
 
-## What is the advantage of this plugin
+## Show Gif
 
-1. more extensible
-2. faster rendering speed (0.04 seconds per thousand renderings, with the window have 50 lines)
-3. more active maintenance (the author is a student with a lot of time to maintain this plugin, haha)
+![Screencasts](https://github.com/Mr-LLLLL/media/blob/master/cool-chunk/cool-chunk.gif)
 
 ## Brief introduction
 
-this plugin now have five parts (future will add more... `^v^`)
+this plugin now have three parts
 
 1. chunk
 2. line_num
 3. context
-
-one picture to understand what these mods do
-
-<img width='500' src='https://raw.githubusercontent.com/shellRaining/img/main/2305/01_intro.png'>
-
-## more details about each mod
-
-<b><font color='red'> NOTE: you can click the picture to get more information about how to configure like this </font></b>
-
-### chunk
-
-<a href='./docs/en/chunk.md#chunk_example1'>
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2303/08_cool-chunk8.gif">
-</a>
-
-### line_num
-
-<a href='./docs/en/line_num.md'>
-<img width="500" alt="image" src="https://raw.githubusercontent.com/shellRaining/img/main/2302/25_cool-chunk3.png">
-</a>
 
 ## Requirements
 
@@ -47,30 +20,12 @@ neovim version `>= 0.9.0`
 
 ## Installation
 
-### Packer
-
-```lua
-use { "shellRaining/cool-chunk.nvim" }
-```
-
-### Plug
-
-```vimscript
-call plug#begin()
-Plug 'shellRaining/cool-chunk.nvim'
-call plug#end()
-
-lua << EOF
-require("cool-chunk").setup({})
-EOF
-```
-
-### Lazy
+### With [Lazy](https://github.com/fork/lazy.nvim)
 
 ```lua
 {
-  "shellRaining/cool-chunk.nvim",
-  event = { "UIEnter" },
+  "Mr-LLLLL/cool-chunk.nvim",
+  event = { "CursorHold", "CursorHoldI" },
   config = function()
     require("cool-chunk").setup({})
   end
@@ -87,32 +42,54 @@ The script comes with the following defaults:
 ```lua
 {
     chunk = {
-        enable = true,
         notify = true,
-        -- details about support_filetypes and exclude_filetypes in https://github.com/shellRaining/cool-chunk.nvim/blob/main/lua/cool-chunk/utils/filetype.lua
-        support_filetypes = ft.support_filetypes,
+        support_filetypes = ft.support_filetypes, -- ft = require("cool-chunk.utils.filetype").support_filetypes
         exclude_filetypes = ft.exclude_filetypes,
+        hl_group = {
+            chunk = "CursorLineNr",
+            error = "Error",
+        },
         chars = {
             horizontal_line = "─",
             vertical_line = "│",
             left_top = "╭",
             left_bottom = "╰",
+            left_arrow = "<",
+            bottom_arrow = "v",
             right_arrow = ">",
         },
-        style = {
-            { fg = "#806d9c" },
-            { fg = "#c21f30" }, -- this fg is used to highlight wrong chunk
-        },
-        textobject = "",
+        textobject = "ah",
         error_sign = true,
+        animate_duration = 200,
+        fire_event = { "CursorHold", "CursorHoldI" },
     },
-
+    context = {
+        notify = true,
+        chars = {
+            "│",
+        },
+        hl_group = {
+            context = "LineNr",
+        },
+        exclude_filetypes = ft.exclude_filetypes,
+        support_filetypes = ft.support_filetypes,
+        textobject = "ih",
+        jump_support_filetypes = { "lua", "python" },
+        jump_start = "[{",
+        jump_end = "]}",
+        fire_event = { "CursorHold", "CursorHoldI" },
+    },
     line_num = {
-        enable = true,
-        -- if cool-chunk make your neovim slowly, set this option to true and try again
-        in_performance = false,
-        style = "#806d9c",
-    },
+        notify = true,
+        hl_group = {
+            chunk = "CursorLineNr",
+            context = "LineNr",
+            error = "Error",
+        },
+        support_filetypes = ft.support_filetypes,
+        exclude_filetypes = ft.exclude_filetypes,
+        fire_event = { "CursorHold", "CursorHoldI" },
+    }
 }
 ```
 
@@ -122,37 +99,6 @@ The script comes with the following defaults:
 
 <hr>
 
-setup example:
-
-```lua
-require('cool-chunk').setup({
-    chunk = {
-        enable = true,
-        notify = true,
-        chars = {
-            horizontal_line = "─",
-            vertical_line = "│",
-            left_top = "╭",
-            left_bottom = "╰",
-            right_arrow = ">",
-        },
-        style = {
-            { fg = "#806d9c" },
-            { fg = "#c21f30" }, -- this fg is used to highlight wrong chunk
-        },
-        textobject = "",
-        error_sign = true,
-    },
-
-    line_num = {
-        enable = true,
-        -- if cool-chunk make your neovim slowly, set this option to true and try again
-        in_performance = false,
-        style = "#806d9c",
-    },
-})
-```
-
 ## command
 
 <details>
@@ -160,19 +106,13 @@ require('cool-chunk').setup({
 
 this plugin provides some commands to switch plugin status, which are listed below
 
-- EnableHL
-- DisableHL
-
-the two commands are used to switch the whole plugin status, when use `DisableHL`, include `hl_chunk` and `hl_indent` will be disable
-
-- Disablecool-chunk
-- Enablecool-chunk
-
-the two will control `hl_chunk`
-
-- DisableHLLineNum
-- EnableHLLineNum
-
-the two will control `hl_line_num`
+- EnableCC
+- DisableCC
+- EnableCCChunk
+- DisableCCChunk
+- EnableCCContext
+- DisableCCContext
+- EnableCCLineNum
+- DisableCCLineNum
 
 </details>

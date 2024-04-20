@@ -36,6 +36,7 @@ local chunk_mod = BaseMod:new({
         textobject = "ah",
         error_sign = true,
         animate_duration = 200,
+        fire_event = { "CursorHold", "CursorHoldI" },
     },
     textobject_buffers = {},
 })

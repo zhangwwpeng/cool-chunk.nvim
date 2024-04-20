@@ -33,6 +33,7 @@ local context_mod = BaseMod:new({
         jump_support_filetypes = { "lua" },
         jump_start = "[{",
         jump_end = "]}",
+        fire_event = { "CursorHold", "CursorHoldI" },
     },
     textobject_buffers = {},
     jump_buffers = {},
