@@ -8,11 +8,13 @@ forked from [hlchunk](https://github.com/shellRaining/hlchunk.nvim). removed ind
 
 ## Brief introduction
 
-this plugin now have three parts
+this plugin now have some function
 
 1. chunk
-2. line_num
+2. line_num (support highlight context and chunk range)
 3. context
+4. textobject (support context textobject and chunk textobject)
+5. jump (supoprt jump to context start and end)
 
 ## Requirements
 
