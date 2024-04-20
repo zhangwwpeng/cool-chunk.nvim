@@ -9,7 +9,6 @@ local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 ---@class ChunkOpts: BaseModOpts
 ---@field chars table<string, string>
 ---@field textobject string
----@field error_sign boolean
 
 ---@class ChunkMod: BaseMod
 ---@field options ChunkOpts
@@ -34,7 +33,6 @@ local chunk_mod = BaseMod:new({
             right_arrow = ">",
         },
         textobject = "ah",
-        error_sign = true,
         animate_duration = 200,
         fire_event = { "CursorHold", "CursorHoldI" },
     },

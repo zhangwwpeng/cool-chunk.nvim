@@ -59,7 +59,6 @@ The script comes with the following defaults:
             right_arrow = ">",
         },
         textobject = "ah",
-        error_sign = true,
         animate_duration = 200,
         fire_event = { "CursorHold", "CursorHoldI" },
     },
