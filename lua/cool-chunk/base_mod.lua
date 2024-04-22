@@ -13,7 +13,8 @@ local utils = require("cool-chunk.utils.utils")
 ---@class timer
 
 ---@class RuntimeVar
----@field old_range table<number>
+---@field old_ctx_range table<number>
+---@field old_chunk_range table<number>
 ---@field is_loaded boolean
 ---@field is_enabled boolean
 ---@field animate_timer timer
@@ -37,7 +38,8 @@ local BaseMod = {
     },
     ns_id = -1,
     bufnr = 0,
-    old_range = {},
+    old_ctx_range = {},
+    old_chunk_range = {},
     is_error = false,
     is_loaded = false,
     is_enabled = false,
@@ -153,11 +155,12 @@ function BaseMod:draw_by_animate(opts, len)
     end))
 end
 
-function BaseMod:refresh(range, is_error)
+function BaseMod:refresh(opts)
     self.ns_id = api.nvim_create_namespace(self.name)
     self.bufnr = api.nvim_get_current_buf()
-    self.old_range = range or {}
-    self.is_error = is_error or false
+    self.old_ctx_range = opts.ctx_range or {}
+    self.old_chunk_range = opts.chunk_range or {}
+    self.is_error = opts.is_error or false
 end
 
 function BaseMod:clear(line_start, line_end)
@@ -168,7 +171,8 @@ function BaseMod:clear(line_start, line_end)
         self.animate_timer:close()
     end
 
-    self.old_range = {}
+    self.old_ctx_range = {}
+    self.old_chunk_range = {}
     self.bufnr = 0
     self.is_error = nil
 

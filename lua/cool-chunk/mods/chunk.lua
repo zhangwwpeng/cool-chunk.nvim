@@ -58,15 +58,18 @@ function chunk_mod:render()
 
 
 
-    if #self.old_range > 1 and
-        cur_chunk_range[1] == self.old_range[1] and
-        cur_chunk_range[2] == self.old_range[2] and
+    if #self.old_chunk_range > 1 and
+        cur_chunk_range[1] == self.old_chunk_range[1] and
+        cur_chunk_range[2] == self.old_chunk_range[2] and
         is_error == self.is_error then
         return
     end
 
     self:clear()
-    self:refresh(cur_chunk_range, is_error)
+    self:refresh({
+        chunk_range = cur_chunk_range,
+        is_error = is_error,
+    })
 
     if cur_chunk_range[2] - cur_chunk_range[1] >= api.nvim_win_get_height(0) or
         require("nvim-treesitter.indent").get_indent(cur_chunk_range[1]) == 0 then

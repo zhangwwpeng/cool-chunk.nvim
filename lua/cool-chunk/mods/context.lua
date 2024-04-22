@@ -52,15 +52,15 @@ function context_mod:render()
 
     local ctx_col, beg_row, end_row = unpack(ctx_range)
 
-    if #self.old_range > 2 and
-        ctx_range[1] == self.old_range[1] and
-        ctx_range[2] == self.old_range[2] and
-        ctx_range[3] == self.old_range[3] then
+    if #self.old_ctx_range > 2 and
+        ctx_range[1] == self.old_ctx_range[1] and
+        ctx_range[2] == self.old_ctx_range[2] and
+        ctx_range[3] == self.old_ctx_range[3] then
         return
     end
 
     self:clear()
-    self:refresh(ctx_range)
+    self:refresh({ ctx_range = ctx_range })
 
 
     local shiftwidth = fn.shiftwidth()

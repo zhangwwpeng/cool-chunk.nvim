@@ -3,7 +3,6 @@ local Array = require("cool-chunk.utils.array")
 local utils = require("cool-chunk.utils.utils")
 local ft = require("cool-chunk.utils.filetype")
 local api = vim.api
-local fn = vim.fn
 local CHUNK_RANGE_RET = utils.CHUNK_RANGE_RET
 
 ---@class LineNumOpts: BaseModOpts
@@ -30,9 +29,7 @@ function line_num_mod:render()
         return
     end
 
-    self:clear()
-    self:refresh()
-
+    local opts = {}
     local retcode, chunk_range = utils.get_chunk_range(self)
     local hl_chunk
     local overlap = {}
@@ -43,8 +40,29 @@ function line_num_mod:render()
     end
 
     if hl_chunk then
-        local beg_row, end_row = unpack(chunk_range)
-        for i = beg_row, end_row do
+        if #self.old_chunk_range > 1 and
+            chunk_range[1] == self.old_chunk_range[1] and
+            chunk_range[2] == self.old_chunk_range[2] then
+            return
+        end
+        opts.old_chunk_range = chunk_range
+    end
+
+    local ctx_range = utils.get_ctx_range(self)
+    if ctx_range then
+        if #self.old_ctx_range > 1 and
+            ctx_range[2] == self.old_ctx_range[1] and
+            ctx_range[3] == self.old_ctx_range[2] then
+            return
+        end
+        opts.old_ctx_range = { ctx_range[2], ctx_range[3] }
+    end
+
+    self:clear()
+    self:refresh(opts)
+
+    if opts.old_chunk_range then
+        for i = chunk_range[1], chunk_range[2] do
             local row_opts = {
                 number_hl_group = hl_chunk
             }
@@ -52,10 +70,9 @@ function line_num_mod:render()
         end
     end
 
-    local ctx_range = utils.get_ctx_range(self)
-    if ctx_range then
-        local _, beg_row, end_row = unpack(ctx_range)
-        for i = beg_row, end_row do
+    if opts.old_ctx_range then
+        ---@diagnostic disable-next-line: need-check-nil
+        for i = ctx_range[2], ctx_range[3] do
             local row_opts = {
                 number_hl_group = self.options.hl_group.context,
                 id = overlap[i]
