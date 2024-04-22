@@ -55,18 +55,24 @@ function M.get_chunk_range(mod)
     return M.CHUNK_RANGE_RET.NO_CHUNK, {}
 end
 
-local function get_valid_range(cur_node, cur_row, cur_indent)
-    local start_row, start_col, end_row, end_col = cur_node:range()
+local function get_valid_ctx_range(cur_node, cur_row, cur_indent)
+    local wrap_res = function(res)
+        res[3] = fn.indent(res[2]) + 1
+        res[5] = #fn.getline(res[4])
+
+        return res
+    end
+    local start_row, _, end_row, _ = cur_node:range()
     local get_indent = require("nvim-treesitter.indent").get_indent
     local start_indent = get_indent(start_row + 1)
     local end_indent = get_indent(end_row + 1)
-    local res = { start_indent, start_row + 1, start_col, end_row + 1, end_col }
+    local res = wrap_res({ start_indent, start_row + 1, 0, end_row + 1, 0 })
     if start_row == end_row then
         return nil
     end
 
-    if start_indent < end_indent and cur_node:type() == "elseif_statement" then
-        res = { start_indent, start_row + 1, start_col, end_row + 2, end_col }
+    if start_indent < end_indent and (cur_node:type() == "elseif_statement" or cur_node:type() == "else_statement") then
+        res = wrap_res({ start_indent, start_row + 1, _, end_row + 2, _ })
     end
     if start_indent <= end_indent then
         if cur_indent > start_indent then
@@ -79,11 +85,11 @@ local function get_valid_range(cur_node, cur_row, cur_indent)
         end
     end
 
-    return false
+    return nil
 end
 
 ---@param mod BaseMod
----@return table<number, number>
+---@return table<number, number> | nil
 ---@diagnostic disable-next-line: unused-local
 function M.get_ctx_jump(mod)
     local cur_row, cur_col = unpack(api.nvim_win_get_cursor(0))
@@ -91,12 +97,14 @@ function M.get_ctx_jump(mod)
     local cur_indent = get_indent(cur_row)
     local cur_node = treesitter.get_node()
     while cur_node do
-        local range = get_valid_range(cur_node, cur_row, cur_indent)
+        local range = get_valid_ctx_range(cur_node, cur_row, cur_indent)
         if range then
-            local indent, start_row, start_col, end_row, end_col = unpack(range)
-            if (cur_row ~= start_row + 1 or cur_col ~= start_col) and
-                (cur_row ~= end_row + 1 or cur_col ~= end_col - 1) then
-                return { start_row, indent, end_row, #fn.getline(end_row + 1) }
+            local _, start_row, start_col, end_row, end_col = unpack(range)
+            if not (
+                    (cur_row == start_row and cur_col + 1 == start_col) or
+                    (cur_row == end_row and cur_col + 1 == end_col)
+                ) then
+                return { start_row, start_col - 1, end_row, end_col }
             end
         end
 
@@ -115,7 +123,7 @@ function M.get_ctx_range(mod)
     local cur_indent = get_indent(cur_row)
     local cur_node = treesitter.get_node()
     while cur_node do
-        local range = get_valid_range(cur_node, cur_row, cur_indent)
+        local range = get_valid_ctx_range(cur_node, cur_row, cur_indent)
         if range then
             local indent, start_row, _, end_row, _ = unpack(range)
             return { indent, start_row + 1, end_row - 1 }
