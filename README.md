@@ -1,6 +1,6 @@
 ## What can this plugin do
 
-forked from [hlchunk](https://github.com/shellRaining/hlchunk.nvim). removed indent(if you wnat to used it, recommend [indent-blankline](https://github.com/lukas-reineke/indent-blankline.nvim)), keep chunk and context and line_num. simple and faster and cool.
+Forked from [hlchunk](https://github.com/shellRaining/hlchunk.nvim). Indent has been removed (but if you want to use it, try [indent-blankline](https://github.com/lukas-reineke/indent-blankline.nvim)). Chunk, context and line_num have been retained. It is simple, fast and cool.
 
 ## Show Gif
 
@@ -8,13 +8,13 @@ forked from [hlchunk](https://github.com/shellRaining/hlchunk.nvim). removed ind
 
 ## Brief introduction
 
-this plugin now have some function
+This plugin now has some functions, which include:
 
 1. chunk
 2. line_num (support highlight context and chunk range)
 3. context
 4. textobject (support context textobject and chunk textobject)
-5. jump (supoprt jump to context start and end)
+5. jump (support jump to context start and end)
 
 ## Requirements
 
@@ -42,7 +42,7 @@ neovim version `>= 0.9.0`
 The script comes with the following defaults:
 
 <details>
-<summary>Click this Dropdown to see defaults setttings.</summary>
+<summary>Click this Dropdown to see default setttings.</summary>
 
 ```lua
 {
@@ -96,9 +96,6 @@ The script comes with the following defaults:
     }
 }
 ```
-
-<hr>
-
 </details>
 
 <hr>
@@ -108,7 +105,7 @@ The script comes with the following defaults:
 <details>
 <summary>Click this Dropdown to see Available Commands</summary>
 
-this plugin provides some commands to switch plugin status, which are listed below
+This plugin provides some commands to switch plugin status, which are listed below:
 
 - EnableCC
 - DisableCC
