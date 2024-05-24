@@ -64,7 +64,7 @@ The script comes with the following defaults:
             right_arrow = ">",
         },
         textobject = "ah",
-        animate_duration = 200,
+        animate_duration = 200, -- if don't want to animation, set to 0.
         fire_event = { "CursorHold", "CursorHoldI" },
     },
     context = {
