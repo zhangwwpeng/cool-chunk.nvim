@@ -136,7 +136,7 @@ end
 ---@param col number the column number
 ---@return boolean
 function M.col_in_screen(col)
-    local leftcol = vim.fn.winsaveview().leftcol
+    local leftcol = vim.o.wrap and 0 or vim.fn.winsaveview().leftcol
     return col >= leftcol
 end
 

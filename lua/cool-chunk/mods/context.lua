@@ -72,7 +72,7 @@ function context_mod:render()
     }
 
     -- render middle section
-    local offset = fn.winsaveview().leftcol
+    local offset = vim.o.wrap and 0 or fn.winsaveview().leftcol
     for i = beg_row, end_row do
         row_opts.virt_text = { { self.options.chars[1], self.options.hl_group.context } }
         row_opts.virt_text_win_col = ctx_col - offset

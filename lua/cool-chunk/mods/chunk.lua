@@ -86,7 +86,7 @@ function chunk_mod:draw_by_direct(range, hl_group)
     local end_blank_len = ts_get_indent(end_row)
     local shiftwidth = fn.shiftwidth()
     local start_col = math.max(math.min(beg_blank_len, end_blank_len) - shiftwidth, 0)
-    local offset = fn.winsaveview().leftcol
+    local offset = vim.o.wrap and 0 or fn.winsaveview().leftcol
     local get_width = api.nvim_strwidth
     local row_opts = {
         virt_text_pos = "overlay",
@@ -171,7 +171,7 @@ function chunk_mod:draw_by_animate(range, hl_group)
         local virt_text = self.options.chars["vertical_line"]
         local arrow_text = self.options.chars["bottom_arrow"]
         local line_num = i
-        local offset = start_col - fn.winsaveview().leftcol
+        local offset = start_col - (vim.o.wrap and 0 or fn.winsaveview().leftcol)
 
         if beg_row == i then
             virt_text = self.options.chars["left_top"]
