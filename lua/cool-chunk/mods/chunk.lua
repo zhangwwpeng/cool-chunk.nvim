@@ -72,7 +72,8 @@ function chunk_mod:render()
     })
 
     if cur_chunk_range[2] - cur_chunk_range[1] >= api.nvim_win_get_height(0) or
-        require("nvim-treesitter.indent").get_indent(cur_chunk_range[1]) == 0 then
+        require("nvim-treesitter.indent").get_indent(cur_chunk_range[1]) == 0 or
+        self.options.animate_duration == 0 then
         chunk_mod:draw_by_direct(cur_chunk_range, hl_group)
     else
         chunk_mod:draw_by_animate(cur_chunk_range, hl_group)
