@@ -72,7 +72,7 @@ function chunk_mod:render()
     })
 
     if cur_chunk_range[2] - cur_chunk_range[1] >= api.nvim_win_get_height(0) or
-        require("nvim-treesitter.indent").get_indent(cur_chunk_range[1]) == 0 or
+        vim.fn.get_indent(cur_chunk_range[1]) == 0 or
         self.options.animate_duration == 0 then
         chunk_mod:draw_by_direct(cur_chunk_range, hl_group)
     else
@@ -81,7 +81,7 @@ function chunk_mod:render()
 end
 
 function chunk_mod:draw_by_direct(range, hl_group)
-    local ts_get_indent = require("nvim-treesitter.indent").get_indent
+    local ts_get_indent = vim.fn.get_indent
     local beg_row, end_row = unpack(range)
     local beg_blank_len = ts_get_indent(beg_row)
     local end_blank_len = ts_get_indent(end_row)
@@ -159,7 +159,7 @@ function chunk_mod:draw_by_direct(range, hl_group)
 end
 
 function chunk_mod:draw_by_animate(range, hl_group)
-    local get_indent = require("nvim-treesitter.indent").get_indent
+    local get_indent = vim.fn.indent
     local beg_row, end_row = unpack(range)
     local beg_blank_len, end_blank_len = get_indent(beg_row), get_indent(end_row)
     local start_col = math.max(math.min(beg_blank_len, end_blank_len) - fn.shiftwidth(), 0)

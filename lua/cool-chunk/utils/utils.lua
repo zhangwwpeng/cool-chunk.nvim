@@ -66,11 +66,11 @@ local function get_valid_ctx_range(cur_node, cur_row, cur_indent)
     local get_indent = require("nvim-treesitter.indent").get_indent
     local start_indent = get_indent(start_row + 1)
     local end_indent = get_indent(end_row + 1)
-    local res = wrap_res({ start_indent, start_row + 1, 0, end_row + 1, 0 })
     if start_row == end_row then
         return nil
     end
 
+    local res = wrap_res({ start_indent, start_row + 1, 0, end_row + 1, 0 })
     if start_indent < end_indent and (cur_node:type() == "elseif_statement" or cur_node:type() == "else_statement") then
         res = wrap_res({ start_indent, start_row + 1, _, end_row + 2, _ })
     end
@@ -85,7 +85,7 @@ local function get_valid_ctx_range(cur_node, cur_row, cur_indent)
         end
     end
 
-    return nil
+    return res
 end
 
 ---@param mod BaseMod
