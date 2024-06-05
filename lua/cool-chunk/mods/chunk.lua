@@ -147,12 +147,9 @@ function chunk_mod:draw_by_direct(range, hl_group)
         row_opts.virt_text_win_col = start_col - offset
         local space_tab = (" "):rep(shiftwidth)
         local line_val = fn.getline(i):gsub("\t", space_tab)
-        if #line_val <= start_col or fn.indent(i) > start_col then
+        if #fn.getline(i) <= start_col or line_val:sub(start_col + 1, start_col + 1):match("%s") then
             if utils.col_in_screen(start_col) then
-                local indent = vim.fn.indent(i)
-                if indent > row_opts.virt_text_win_col then
-                    api.nvim_buf_set_extmark(0, self.ns_id, i - 1, 0, row_opts)
-                end
+                api.nvim_buf_set_extmark(self.bufnr, self.ns_id, i - 1, 0, row_opts)
             end
         end
     end

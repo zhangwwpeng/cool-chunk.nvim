@@ -74,6 +74,10 @@ local function get_valid_ctx_range(cur_node, cur_row, cur_indent)
     if start_indent < end_indent and (cur_node:type() == "elseif_statement" or cur_node:type() == "else_statement") then
         res = wrap_res({ start_indent, start_row + 1, _, end_row + 2, _ })
     end
+    -- don't use all file range
+    if res[2] == 1 then
+        return nil
+    end
     if start_indent <= end_indent then
         if cur_indent > start_indent then
             return res
