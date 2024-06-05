@@ -132,7 +132,7 @@ function BaseMod:draw_by_animate(opts, len)
         row_opts.virt_text_win_col = opts.offset[index]
         local id
         local indent = get_indent(opts.line_num[index])
-        if indent == 0 or indent > row_opts.virt_text_win_col then
+        if indent > row_opts.virt_text_win_col then
             id = api.nvim_buf_set_extmark(opts.bufnr, self.ns_id, opts.line_num[index] - 1, 0, row_opts)
         end
 
@@ -144,6 +144,8 @@ function BaseMod:draw_by_animate(opts, len)
             prev_opt = row_opts
             prev_opt.id = id
             prev_opt.virt_text = { { opts.virt_text[index][2], opts.hl_group } }
+        else
+            prev_opt = nil
         end
 
         index = index + 1
