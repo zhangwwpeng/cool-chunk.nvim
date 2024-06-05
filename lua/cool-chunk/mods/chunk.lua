@@ -113,7 +113,7 @@ function chunk_mod:draw_by_direct(range, hl_group)
         row_opts.virt_text = { { beg_virt_text, hl_group } }
         row_opts.virt_text_win_col = math.max(start_col - offset, 0)
         local indent = vim.fn.indent(beg_row)
-        if indent == 0 or indent > row_opts.virt_text_win_col then
+        if indent > row_opts.virt_text_win_col then
             api.nvim_buf_set_extmark(0, self.ns_id, beg_row - 1, 0, row_opts)
         end
     end
@@ -136,7 +136,7 @@ function chunk_mod:draw_by_direct(range, hl_group)
         row_opts.virt_text = { { end_virt_text, hl_group } }
         row_opts.virt_text_win_col = math.max(start_col - offset, 0)
         local indent = vim.fn.indent(end_row)
-        if indent == 0 or indent > row_opts.virt_text_win_col then
+        if indent > row_opts.virt_text_win_col then
             api.nvim_buf_set_extmark(0, self.ns_id, end_row - 1, 0, row_opts)
         end
     end
@@ -150,7 +150,7 @@ function chunk_mod:draw_by_direct(range, hl_group)
         if #line_val <= start_col or fn.indent(i) > start_col then
             if utils.col_in_screen(start_col) then
                 local indent = vim.fn.indent(i)
-                if indent == 0 or indent > row_opts.virt_text_win_col then
+                if indent > row_opts.virt_text_win_col then
                     api.nvim_buf_set_extmark(0, self.ns_id, i - 1, 0, row_opts)
                 end
             end
