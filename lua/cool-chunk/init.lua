@@ -14,8 +14,8 @@ local function get_mods_status(plugin_config)
     plugin_config = plugin_config or {}
     local mods_status = {
         chunk = true,
-        line_num = true,
-        context = true,
+        line_num = false,
+        context = false,
     }
 
     for mod_name, mod_conf in pairs(plugin_config) do
